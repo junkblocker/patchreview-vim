@@ -1,0 +1,7 @@
+1) Copy patchreview.vim to your ~/.vim/plugin directory and patchreview.txt to
+   your ~/.vim/doc directory.
+
+2) Open vim and do
+
+   :cd ~/.vim/doc
+   :helptags .
