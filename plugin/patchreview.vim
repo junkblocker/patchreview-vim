@@ -258,7 +258,7 @@ function! <SID>ExtractDiffsNative(...)                                    "{{{
 
     unlet! filterdiffcmd
     let filterdiffcmd = '' . g:patchreview_filterdiff . ' -i ' . relpath . ' ' . patchfile
-    let this_patch['content'] = split(system(filterdiffcmd), '[\n\r]')
+    let this_patch['content'] = split(system(filterdiffcmd), '\n')
     let g:patches['patch'] += [this_patch]
     Debug "Patch collected for " . relpath
   endfor
