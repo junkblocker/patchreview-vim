@@ -118,7 +118,7 @@ if ! has('diff')
   finish
 endif
 
-let g:loaded_patchreview="0.2.3"
+let g:loaded_patchreview="0.3"
 
 let s:msgbufname = '-PatchReviewMessages-'
 
