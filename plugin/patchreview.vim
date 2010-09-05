@@ -9,10 +9,9 @@
 "
 " Changelog :
 "
-"   0.2.3 - In progress
-"           TODO - If a .sw? is present or file is open in another instance,
-"           vim pauses for it. Maybe use SwapExists
-"           Added git diff support
+"   0.2.3 - Added git diff support
+"         - Added some error handling for open files by opening them in read
+"           only mode
 "
 "   0.2.2 - Security fixes by removing custom tempfile creation
 "         - Removed need for DiffReviewCleanup/PatchReviewCleanup
@@ -33,6 +32,13 @@
 "   0.1 - First released
 "}}}
 
+" TODO {{{
+" 1) If a .sw? is present or file is open in another instance, vim pauses for
+"    it. Maybe use SwapExists.
+" 2) git staged support?
+" 3) See if Windows line endings have an issue.
+" }}}
+"
 " Documentation:                                                         "{{{
 " ===========================================================================
 " This plugin allows single or multiple, patch or diff based code reviews to
