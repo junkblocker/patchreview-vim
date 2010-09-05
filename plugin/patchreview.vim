@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 0.2.2                                        "{{{
+" Version       : 0.2.3                                        "{{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2010 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -12,6 +12,7 @@
 "   0.2.3 - In progress
 "           TODO - If a .sw? is present or file is open in another instance,
 "           vim pauses for it. Maybe use SwapExists
+"           Added git diff support
 "
 "   0.2.2 - Security fixes by removing custom tempfile creation
 "         - Removed need for DiffReviewCleanup/PatchReviewCleanup
@@ -277,6 +278,7 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
   State 'START'
   while line_num < linescount
     let line = lines[line_num]
+    Debug 'Read: [' . line . ']'
     let line_num += 1
     if State() == 'START' " {{{
       let mat = matchlist(line, '^--- \([^\t]\+\).*$')
@@ -284,7 +286,6 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
         State 'MAYBE_UNIFIED_DIFF'
         let p_first_file = mat[1]
         let collect = [line]
-        Debug line . State()
         continue
       endif
       let mat = matchlist(line, '^\*\*\* \([^\t]\+\).*$')
@@ -292,7 +293,6 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
         State 'MAYBE_CONTEXT_DIFF'
         let p_first_file = mat[1]
         let collect = [line]
-        Debug line . State()
         continue
       endif
       continue
@@ -324,30 +324,25 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
       endif
       State 'EXPECT_15_STARS'
       let collect += [line]
-      Debug line . State()
       " }}}
     elseif State() == 'EXPECT_15_STARS' " {{{
       if line !~ '^*\{15}$'
         State 'START'
         let line_num -= 1
-        Debug line . State()
         continue
       endif
       State 'EXPECT_CONTEXT_CHUNK_HEADER_1'
       let collect += [line]
-      Debug line . State()
       " }}}
     elseif State() == 'EXPECT_CONTEXT_CHUNK_HEADER_1' " {{{
       let mat = matchlist(line, '^\*\*\* \(\d\+,\)\?\(\d\+\) \*\*\*\*$')
       if empty(mat) || mat[1] == ''
         State 'START'
         let line_num -= 1
-        Debug line . State()
         continue
       endif
       let collect += [line]
       State 'SKIP_CONTEXT_STUFF_1'
-      Debug line . State()
       continue
       " }}}
     elseif State() == 'SKIP_CONTEXT_STUFF_1' " {{{
@@ -358,12 +353,11 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
           let c_count = 0
           State 'READ_CONTEXT_CHUNK'
           let collect += [line]
-          Debug line . State() . " Goal count set to " . goal_count
+          Debug " Goal count set to " . goal_count
           continue
         endif
         State 'START'
         let line_num -= 1
-        Debug line . State()
         continue
       endif
       let collect += [line]
@@ -380,7 +374,6 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
         if empty(mat) || mat[1] == ''
           let line_num -= 1
           State 'START'
-          Debug line . State()
           continue
         endif
         let collect += [line]
@@ -402,18 +395,13 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
       if line =~ '^\*\{15}$'
         let collect += [line]
         State 'EXPECT_CONTEXT_CHUNK_HEADER_1'
-        Debug line . State()
         continue
       endif
-      let this_patch = {}
-      let this_patch['filename'] = filepath
-      let this_patch['type'] = p_type
-      let this_patch['content'] = collect
+      let this_patch = {'filename': filepath, 'type':  p_type, 'content':  collect}
       let g:patches['patch'] += [this_patch]
       let line_num -= 1
       State 'START'
       Debug "Patch collected for " . filepath
-      Debug line . State()
       continue
       " }}}
     elseif State() == 'MAYBE_UNIFIED_DIFF' " {{{
@@ -421,7 +409,6 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
       if empty(mat) || mat[1] == ''
         State 'START'
         let line_num -= 1
-        Debug line . State()
         continue
       endif
       let p_second_file = mat[1]
@@ -443,11 +430,10 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
       endif
       State 'EXPECT_UNIFIED_RANGE_CHUNK'
       let collect += [line]
-      Debug line . State()
       continue
       " }}}
     elseif State() == 'EXPECT_UNIFIED_RANGE_CHUNK' "{{{
-      let mat = matchlist(line, '^@@ -\(\d\+,\)\?\(\d\+\) +\(\d\+,\)\?\(\d\+\) @@$')
+      let mat = matchlist(line, '^@@ -\(\d\+,\)\?\(\d\+\) +\(\d\+,\)\?\(\d\+\) @@.*$')
       if ! empty(mat)
         let old_goal_count = mat[2]
         let new_goal_count = mat[4]
@@ -456,27 +442,22 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
         Debug "Goal count set to " . old_goal_count . ', ' . new_goal_count
         State 'READ_UNIFIED_CHUNK'
         let collect += [line]
-        Debug line . State()
         continue
       endif
       State 'START'
-      Debug line . State()
       continue
       "}}}
     elseif State() == 'READ_UNIFIED_CHUNK' " {{{
       if o_count == old_goal_count && n_count == new_goal_count
         if line =~ '^\\.*$'   " XXX: Can we go to another chunk from here??
           let collect += [line]
-          let this_patch = {}
-          let this_patch['filename'] = filepath
-          let this_patch['type'] = p_type
-          let this_patch['content'] = collect
+          let this_patch = {'filename': filepath, 'type': p_type, 'content': collect}
           let g:patches['patch'] += [this_patch]
           Debug "Patch collected for " . filepath
           State 'START'
           continue
         endif
-        let mat = matchlist(line, '^@@ -\(\d\+,\)\?\(\d\+\) +\(\d\+,\)\?\(\d\+\) @@$')
+        let mat = matchlist(line, '^@@ -\(\d\+,\)\?\(\d\+\) +\(\d\+,\)\?\(\d\+\) @@.*$')
         if ! empty(mat)
           let old_goal_count = mat[2]
           let new_goal_count = mat[4]
@@ -484,18 +465,13 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
           let n_count = 0
           Debug "Goal count set to " . old_goal_count . ', ' . new_goal_count
           let collect += [line]
-          Debug line . State()
           continue
         endif
-        let this_patch = {}
-        let this_patch['filename'] = filepath
-        let this_patch['type'] = p_type
-        let this_patch['content'] = collect
+        let this_patch = {'filename': filepath, 'type': p_type, 'content': collect}
         let g:patches['patch'] += [this_patch]
         Debug "Patch collected for " . filepath
         let line_num -= 1
         State 'START'
-        Debug line . State()
         continue
       else " goal not met yet
         let mat = matchlist(line, '^\([\\+ -]\).*$')
@@ -516,7 +492,6 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
           let o_count += 1
         endif
         let collect += [line]
-        Debug line . State()
         continue
       endif
       " }}}
@@ -527,10 +502,7 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
   endwhile
   "Pecho State()
   if (State() == 'READ_CONTEXT_CHUNK' && c_count == goal_count) || (State() == 'READ_UNIFIED_CHUNK' && n_count == new_goal_count && o_count == old_goal_count)
-    let this_patch = {}
-    let this_patch['filename'] = filepath
-    let this_patch['type'] = p_type
-    let this_patch['content'] = collect
+    let this_patch = {'filename': filepath, 'type': p_type, 'content': collect}
     let g:patches['patch'] += [this_patch]
     Debug "Patch collected for " . filepath
   endif
@@ -541,9 +513,11 @@ endfunction
 function! State(...)  " For easy manipulation of diff extraction state      "{{{
   if a:0 != 0
     let s:STATE = a:1
+    Debug s:STATE
   else
     if ! exists('s:STATE')
       let s:STATE = 'START'
+      Debug s:STATE
     endif
     return s:STATE
   endif
@@ -552,6 +526,13 @@ com! -nargs=+ -complete=expression State call State(<args>)
 "}}}
 
 function! <SID>PatchReview(...)                                           "{{{
+  augroup patchreview_plugin
+    autocmd!
+
+    " When opening files which may be open elsewhere, open them in read only
+    " mode
+    au SwapExists * :let v:swapchoice='o'
+  augroup end
   let s:save_shortmess = &shortmess
   let s:save_aw = &autowrite
   let s:save_awa = &autowriteall
@@ -562,6 +543,7 @@ function! <SID>PatchReview(...)                                           "{{{
   let &autowriteall = s:save_awa
   let &autowrite = s:save_aw
   let &shortmess = s:save_shortmess
+  augroup! patchreview_plugin
 endfunction
 "}}}
 
@@ -769,16 +751,25 @@ endfunction
 "}}}
 
 function! <SID>DiffReview(...)                                            "{{{
+  augroup patchreview_plugin
+    autocmd!
+
+    " When opening files which may be open elsewhere, open them in read only
+    " mode
+    au SwapExists * :let v:swapchoice='o'
+  augroup end
+
   let s:save_shortmess = &shortmess
   set shortmess=aW
   call s:PR_wipeMsgBuf()
 
   let vcsdict = {
-                  \'Mercurial'  : {'dir' : '.hg',  'binary' : 'hg',  'diffargs' : 'diff' ,          'strip' : 1},
-                  \'Bazaar-NG'  : {'dir' : '.bzr', 'binary' : 'bzr', 'diffargs' : 'diff' ,          'strip' : 0},
-                  \'monotone'   : {'dir' : '_MTN', 'binary' : 'mtn', 'diffargs' : 'diff --unified', 'strip' : 0},
-                  \'Subversion' : {'dir' : '.svn', 'binary' : 'svn', 'diffargs' : 'diff' ,          'strip' : 0},
-                  \'cvs'        : {'dir' : 'CVS',  'binary' : 'cvs', 'diffargs' : '-q diff -u' ,    'strip' : 0},
+                  \'Mercurial'  : {'dir': '.hg',  'binary': 'hg',  'strip': 1, 'diffargs': 'diff'                  },
+                  \'Bazaar-NG'  : {'dir': '.bzr', 'binary': 'bzr', 'strip': 0, 'diffargs': 'diff'                  },
+                  \'monotone'   : {'dir': '_MTN', 'binary': 'mtn', 'strip': 0, 'diffargs': 'diff --unified'        },
+                  \'Subversion' : {'dir': '.svn', 'binary': 'svn', 'strip': 0, 'diffargs': 'diff'                  },
+                  \'cvs'        : {'dir': 'CVS',  'binary': 'cvs', 'strip': 0, 'diffargs': '-q diff -u'            },
+                  \'git'        : {'dir': '.git', 'binary': 'git', 'strip': 1, 'diffargs': 'diff -p -U5 --no-color'},
                   \}
 
   unlet! s:theDiffCmd
@@ -789,13 +780,13 @@ function! <SID>DiffReview(...)                                            "{{{
         if ! s:PR_checkBinary(vcsdict[key]['binary'])
           Pecho 'Current directory looks like a ' . vcsdict[key] . ' repository but ' . vcsdist[key]['binary'] . ' command was not found on path.'
           let &shortmess = s:save_shortmess
+          augroup! patchreview_plugin
           return
         else
           let s:theDiffCmd = vcsdict[key]['binary'] . ' ' . vcsdict[key]['diffargs']
           let strip = vcsdict[key]['strip']
 
           Pecho 'Using [' . s:theDiffCmd . '] to generate diffs for this ' . key . ' review.'
-          let &shortmess = s:save_shortmess
           let l:vcs = vcsdict[key]['binary']
           break
         endif
@@ -810,6 +801,7 @@ function! <SID>DiffReview(...)                                            "{{{
   if ! exists('s:theDiffCmd')
     Pecho 'Please define g:patchreview_diffcmd and make sure you are in a VCS controlled top directory.'
     let &shortmess = s:save_shortmess
+    augroup! patchreview_plugin
     return
   endif
 
@@ -827,11 +819,13 @@ function! <SID>DiffReview(...)                                            "{{{
       Pecho cout
       Pecho 'Diff review aborted.'
       let &shortmess = s:save_shortmess
+      augroup! patchreview_plugin
       return
     endif
     let s:reviewmode = 'diff'
     call s:_GenericReview([outfile, strip])
     let &shortmess = s:save_shortmess
+    augroup! patchreview_plugin
   finally
     call delete(outfile)
   endtry
@@ -884,4 +878,4 @@ endif
 "}}}
 
 " modeline
-" vim: set et fdl=0 fdm=marker fenc=latin ff=unix ft=vim sw=2 sts=0 ts=2 textwidth=78 nowrap :
+" vim: set et fdl=1 fdm=marker fenc=latin ff=unix ft=vim sw=2 sts=0 ts=2 textwidth=78 nowrap :
