@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 0.2.3                                        "{{{
+" Version       : 0.3                                        "{{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2010 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -9,9 +9,9 @@
 "
 " Changelog :
 "
-"   0.2.3 - Added git diff support
-"         - Added some error handling for open files by opening them in read
-"           only mode
+"   0.3 - Added git diff support
+"       - Added some error handling for open files by opening them in read
+"         only mode
 "
 "   0.2.2 - Security fixes by removing custom tempfile creation
 "         - Removed need for DiffReviewCleanup/PatchReviewCleanup
