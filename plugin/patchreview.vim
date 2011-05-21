@@ -1,13 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 0.3                                        "{{{
+" Version       : 0.3.1                                      "{{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2010 by Manpreet Singh
+" Copyright     : 2006-2011 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog :
+"
+"   0.3.1 - Do not open the status buffer in all tabs.
 "
 "   0.3 - Added git diff support
 "       - Added some error handling for open files by opening them in read
@@ -118,7 +120,7 @@ if ! has('diff')
   finish
 endif
 
-let g:loaded_patchreview="0.3"
+let g:loaded_patchreview="0.3.1"
 
 let s:msgbufname = '-PatchReviewMessages-'
 
@@ -147,6 +149,12 @@ function! <SID>Pecho(...)                                                 "{{{
   " Usage: Pecho(msg, [return_to_original_window_flag])
   "            default return_to_original_window_flag = 0
   "
+  let l:curtabnr = tabpagenr()
+  if exists('s:msgbuftabnr')
+    exe ':tabnext ' . s:msgbuftabnr
+  else
+    let s:msgbuftabnr = tabpagenr()
+  endif
   let cur_winnr = winnr()
   let winnum = bufwinnr(s:msgbufname)
   if winnum != -1 " If the window is already open, jump to it
@@ -169,6 +177,7 @@ function! <SID>Pecho(...)                                                 "{{{
   endif
   exe ':$'
   setlocal nomodifiable
+  exe ':tabnext ' . l:curtabnr
   if a:0 > 1 && a:2
     exe cur_winnr . 'wincmd w'
   endif
@@ -743,15 +752,15 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       else
         Pecho msgtype . ' ' . relpath, 1
       endif
-      silent! exe 'tabn ' . s:origtabpagenr
     finally
+      silent! exe 'tabn ' . s:origtabpagenr
       call delete(tmpname)
       call delete(tmpname . 'file')
       call delete(tmpname . 'file.rej')
     endtry
   endfor
   Pecho '-----'
-  Pecho 'Done.'
+  Pecho 'Done.', 1
 
 endfunction
 "}}}
