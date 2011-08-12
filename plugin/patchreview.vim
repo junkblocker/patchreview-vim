@@ -1,13 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 0.3.1                                      "{{{
+" Version       : 0.3.2                                      "{{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2011 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog :
+"
+"   0.3.2 - Some diff extraction fixes and behavior improvement.
 "
 "   0.3.1 - Do not open the status buffer in all tabs.
 "
@@ -120,7 +122,7 @@ if ! has('diff')
   finish
 endif
 
-let g:loaded_patchreview="0.3.1"
+let g:loaded_patchreview="0.3.2"
 
 let s:msgbufname = '-PatchReviewMessages-'
 
@@ -334,7 +336,7 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
           let filepath = p_first_file
         else
           let p_type = '!'
-          let filepath = p_first_file
+          let filepath = p_second_file
         endif
       endif
       State 'EXPECT_15_STARS'
@@ -440,7 +442,7 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
           let filepath = p_first_file
         else
           let p_type = '!'
-          let filepath = p_first_file
+          let filepath = p_second_file
         endif
       endif
       State 'EXPECT_UNIFIED_RANGE_CHUNK'
@@ -457,9 +459,13 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
         Debug "Goal count set to " . old_goal_count . ', ' . new_goal_count
         State 'READ_UNIFIED_CHUNK'
         let collect += [line]
-        continue
+      else
+        let this_patch = {'filename': filepath, 'type': p_type, 'content': collect}
+        let g:patches['patch'] += [this_patch]
+        Debug "Patch collected for " . filepath
+        State 'START'
+        let line_num -= 1
       endif
-      State 'START'
       continue
       "}}}
     elseif State() == 'READ_UNIFIED_CHUNK' " {{{
@@ -568,8 +574,8 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   "   arg2 = strip count
   " patch mode:
   "   arg1 = patchfile
-  "   arg2 = strip count
-  "   arg3 = directory
+  "   arg2 = directory
+  "   arg3 = strip count
 
   " VIM 7+ required
   if version < 700
@@ -703,48 +709,58 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       " write patch for patch.filename into tmpname
       call writefile(patch.content, tmpname)
       if patch.type == '+' && s:reviewmode == 'patch'
+        Debug 'Case 1'
         let inputfile = ''
-        let patchcmd = '!' . g:patchreview_patch . patch_R_option . ' -o "' . tmpname . '.file" "' . inputfile . '" < "' . tmpname . '"'
+        let patchcmd = '!' . g:patchreview_patch . patch_R_option . ' -s -o "' . tmpname . '.file" "' . inputfile . '" < "' . tmpname . '"'
       elseif patch.type == '+' && s:reviewmode == 'diff'
+        Debug 'Case 2'
         let inputfile = ''
         unlet! patchcmd
       else
+        Debug 'Case 3'
         let inputfile = expand(StrippedRelativeFilePath, ':p')
-        let patchcmd = '!' . g:patchreview_patch . patch_R_option . ' -o "' . tmpname . '.file" "' . inputfile . '" < "' . tmpname . '"'
+        let patchcmd = '!' . g:patchreview_patch . patch_R_option . ' -s -o "' . tmpname . '.file" "' . inputfile . '" < "' . tmpname . '"'
       endif
+      let error = 0
       if exists('patchcmd')
         let v:errmsg = ''
         Debug patchcmd
         silent exe patchcmd
         if v:errmsg != '' || v:shell_error
+          let error = 1
           Pecho 'ERROR: Could not execute patch command.'
           Pecho 'ERROR:     ' . patchcmd
           Pecho 'ERROR: ' . v:errmsg
           Pecho 'ERROR: Diff skipped.'
-          continue
         endif
       endif
       let s:origtabpagenr = tabpagenr()
       silent! exe 'tabedit ' . StrippedRelativeFilePath
-      if exists('patchcmd')
-        " modelines in loaded files mess with diff comparision
-        let s:keep_modeline=&modeline
-        let &modeline=0
-        silent! exe 'vert diffsplit ' . tmpname . '.file'
-        setlocal buftype=nofile
-        setlocal noswapfile
-        setlocal syntax=none
-        setlocal bufhidden=delete
-        setlocal nobuflisted
-        setlocal modifiable
-        setlocal nowrap
-        " Remove buffer name
-        silent! 0f
-        " Switch to original to get a nice tab title
-        silent! wincmd p
-        let &modeline=s:keep_modeline
+      if ! error
+        if exists('patchcmd')
+          " modelines in loaded files mess with diff comparision
+          let s:keep_modeline=&modeline
+          let &modeline=0
+          silent! exe 'vert diffsplit ' . tmpname . '.file'
+          setlocal buftype=nofile
+          setlocal noswapfile
+          setlocal syntax=none
+          setlocal bufhidden=delete
+          setlocal nobuflisted
+          setlocal modifiable
+          setlocal nowrap
+          " Remove buffer name
+          silent! 0f
+          " Switch to original to get a nice tab title
+          silent! wincmd p
+          let &modeline=s:keep_modeline
+        else
+          silent! vnew
+        endif
       else
-        silent! vnew
+        if ! filereadable(inputfile)
+          Pecho 'ERROR: Original file ' . inputfile . ' does not exist.'
+        endif
       endif
       if filereadable(tmpname . '.file.rej')
         silent! exe 'topleft 5split ' . tmpname . '.file.rej'
