@@ -656,7 +656,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   endif
   Pecho 'Source directory: ' . getcwd()
   Pecho '------------------'
-  if s:PR_checkBinary('filterdiff') && 0
+  if s:PR_checkBinary('filterdiff')
     Debug "Using filterdiff"
     call s:ExtractDiffsNative(PatchFilePath)
   else
