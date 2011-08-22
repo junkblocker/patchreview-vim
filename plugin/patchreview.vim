@@ -290,7 +290,7 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
   endif
   let collect = []
   let line_num = 0
-  let lines = readfile(patchfile)
+  let lines = readfile(patchfile, "b")
   let linescount = len(lines)
   State 'START'
   while line_num < linescount
