@@ -258,7 +258,7 @@ function! <SID>ExtractDiffsNative(...)                                    "{{{
 
     unlet! filterdiffcmd
     let filterdiffcmd = '' . g:patchreview_filterdiff . ' -i ' . relpath . ' ' . patchfile
-    let this_patch['content'] = split(system(filterdiffcmd), '[\n\r]')
+    let this_patch['content'] = split(system(filterdiffcmd), '\n')
     let g:patches['patch'] += [this_patch]
     Debug "Patch collected for " . relpath
   endfor
@@ -290,7 +290,7 @@ function! <SID>ExtractDiffsPureVim(...)                                   "{{{
   endif
   let collect = []
   let line_num = 0
-  let lines = readfile(patchfile)
+  let lines = readfile(patchfile, "b")
   let linescount = len(lines)
   State 'START'
   while line_num < linescount
@@ -656,7 +656,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   endif
   Pecho 'Source directory: ' . getcwd()
   Pecho '------------------'
-  if s:PR_checkBinary('filterdiff') && 0
+  if s:PR_checkBinary('filterdiff')
     Debug "Using filterdiff"
     call s:ExtractDiffsNative(PatchFilePath)
   else
