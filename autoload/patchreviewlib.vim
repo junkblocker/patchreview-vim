@@ -1,13 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 0.3.2                                      "{{{
+" Version       : 0.4                                                     "{{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2012 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog :
+"
+"   0.4 - Added patchreview_postfunc for long postreview jobs
 "
 "   0.3.2 - Some diff extraction fixes and behavior improvement.
 "
@@ -37,10 +39,7 @@
 "}}}
 
 " TODO {{{
-" 1) If a .sw? is present or file is open in another instance, vim pauses for
-"    it. Maybe use SwapExists.
-" 2) git staged support?
-" 3) See if Windows line endings have an issue.
+" 1) git staged support?
 " }}}
 "
 " Documentation:                                                         "{{{
@@ -114,15 +113,10 @@ if &cp || (! exists('g:patchreview_debug') && exists('g:loaded_patchreview'))
   finish
 endif
 if v:version < 700
-  echomsg 'patchreview: You need at least Vim 7.0'
-  finish
-endif
-if ! has('diff')
-  call confirm('patchreview.vim plugin needs (G)VIM built with +diff support to work.')
   finish
 endif
 
-let g:loaded_patchreview="0.3.2"
+let g:loaded_patchreview="0.4"
 
 let s:msgbufname = '-PatchReviewMessages-'
 
@@ -542,6 +536,9 @@ function! State(...)  " For easy manipulation of diff extraction state      "{{{
     endif
     return s:STATE
   endif
+  if exists('g:patchreview_postfunc')
+    call call(g:patchreview_postfunc, ['Patch Review'])
+  endif
 endfunction
 com! -nargs=+ -complete=expression State call State(<args>)
 "}}}
@@ -565,6 +562,9 @@ function! patchreviewlibPatchReview(...)                                        
   let &autowrite = s:save_aw
   let &shortmess = s:save_shortmess
   augroup! patchreview_plugin
+  if exists('g:patchreview_postfunc')
+    call call(g:patchreview_postfunc, ['Reverse Patch Review'])
+  endif
 endfunction
 "}}}
 
@@ -860,6 +860,9 @@ function! patchreviewlib#DiffReview(...)                                        
   finally
     call delete(outfile)
   endtry
+  if exists('g:patchreview_postfunc')
+    call call(g:patchreview_postfunc, ['Diff Review'])
+  endif
 endfunction
 "}}}
 

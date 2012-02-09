@@ -1,13 +1,13 @@
 *patchreview.txt* Vim global plugin for doing single, multi-patch or diff code reviews
-                  Version  v0.3.2 (for Vim version 7.0 or higher)
+                Version  v0.4 (for Vim version 7.0 or higher)
 
-            Author: Manpreet Singh < junkblocker@yahoo.com >
-            Copyright (C) 2006-2011 by Manpreet Singh
-            License : This file is placed in the public domain.
+                Author: Manpreet Singh < junkblocker@yahoo.com >
+                   Copyright (C) 2006-2011 by Manpreet Singh
+              License : This file is placed in the public domain.
 
 =============================================================================
 
-CONTENTS	                 *patchreview* *diffreview* *patchreview-contents*
+CONTENTS                    *patchreview* *diffreview* *patchreview-contents*
 
   1. Contents.........................................: |patchreview-contents|
   2. Introduction.....................................: |patchreview-intro|
@@ -22,8 +22,8 @@ PatchReview Introduction                                  *patchreview-intro*
 
 The Patch Review plugin allows easy single or multipatch code or diff reviews.
 
-It opens each affected file in the patch or in a workspace diff in a diff view
-in a separate tab.
+It opens each affected (modified/added/deleted) file in the patch or in a
+version controlled workspace diff in a diff view in a separate tab.
 
 VIM provides the |:diffpatch| and related commands to do single file reviews
 but can not handle patch files containing multiple patches as is common with
@@ -42,9 +42,9 @@ running their diff command.
 PatchReview Options                                     *patchreview-options*
 
   g:patchreview_patch = {string}
-      Optional path to patch binary. PatchReview tries to locate patch on
+      Optional path to patch binary. |PatchReview| tries to locate patch on
       system path automatically. If the binary is not on system path, this
-      option tell PatchReview the full path to the binary.  This option, if
+      option tell |PatchReview| the full path to the binary.  This option, if
       specified, overrides the default patch binary on the path.
 
     examples:
@@ -73,7 +73,7 @@ PatchReview Options                                     *patchreview-options*
 <
 =============================================================================
 
-PatchReview Usage                                          *patchreview-usage*
+PatchReview Usage                                         *patchreview-usage*
                                                                 *:DiffReview*
 
   :DiffReview
@@ -82,16 +82,31 @@ PatchReview Usage                                          *patchreview-usage*
     Currently supports Mercurial (hg), Subversion (svn), CVS, Bazaar (bzr) and
     Monotone.
 
+    Note Only context or unified diff format patches are supported.
+
                                                                 *:PatchReview*
 
   :PatchReview patchfile_path [optional_source_directory]
 
     Perform a patch review in the current directory based on the supplied
     patchfile_path. If optional_source_directory is specified, patchreview is
-    done on that directory. Otherwise, the current directory is assumed to be
-    the source directory.
+    done on that directory.
 
-    Only supports context or unified format patches.
+    Note Only context or unified diff format patches are supported.
 
+
+Hooks                                                      *:patchreview-hooks*
+
+  g:patchreview_postfunc = '{function}'
+
+      A function to be called on finishing review. For example, the following
+      example shows a way to use this to create a way to get notifications when
+      a long review finishes on a Mac OS X machine. >
+
+      function MyNotify(review_type)
+          system('say "' . review_type . ' completed"')
+      endfunction
+      let g:patchreview_postfun = 'MyNotify'
+<
 ------------------------------------------------------------------------------
- vim: ft=help:ts=2:sts=2:sw=2:tw=78:norl:
+ vim: ft=help:ts=8:sts=8:sw=8:noexpandtab:tw=78:norl:
