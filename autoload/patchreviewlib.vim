@@ -87,14 +87,9 @@
 "
 "  Configuration:
 "
-"  Optionally, specify the locations to these filterdiff and patch commands
-"  and location of a temporary directory to use in your .vimrc.
+"  Optionally, specify the locations to the patch command in your .vimrc.
 "
 "      let g:patchreview_patch       = '/path/to/gnu/patch'
-"
-"      " If you are using filterdiff
-"      let g:patchreview_filterdiff  = '/path/to/filterdiff'
-"
 "
 " Usage:
 "
@@ -103,10 +98,9 @@
 ""}}}
 
 " Enabled only during development
-" unlet! g:loaded_patchreview " DEBUG
-" unlet! g:patchreview_patch " DEBUG
-" unlet! g:patchreview_filterdiff " DEBUG
-" let g:patchreview_patch = 'patch'    " DEBUG
+" unlet! g:loaded_patchreview
+" unlet! g:patchreview_patch
+" let g:patchreview_patch = 'patch'
 
 " load only once
 if &cp || (! exists('g:patchreview_debug') && exists('g:loaded_patchreview'))
@@ -118,7 +112,7 @@ endif
 
 let g:loaded_patchreview="0.4"
 
-let s:msgbufname = '-PatchReviewMessages-'
+let s:msgbufname = '-PatchReview_Messages-'
 
 function! <SID>Debug(str)                                                 "{{{
   if exists('g:patchreview_debug')
@@ -202,8 +196,9 @@ function! <SID>PR_checkBinary(BinaryName)                                 "{{{
 endfunction
 "}}}
 
-function! <SID>ExtractDiffsNative(...)                                    "{{{
-  " Sets g:patches = {'reason':'', 'patch':[
+
+function! <SID>ExtractDiffs(...)                                   "{{{
+  " Sets g:patches = {'fail':'', 'patch':[
   " {
   "  'filename': filepath
   "  'type'    : '+' | '-' | '!'
@@ -214,64 +209,7 @@ function! <SID>ExtractDiffsNative(...)                                    "{{{
   let g:patches = {'reason' : '', 'patch' : []}
   " TODO : User pointers into lines list rather then use collect
   if a:0 == 0
-    let g:patches['reason'] = "ExtractDiffsNative expects at least a patchfile argument"
-    return
-  endif
-  let patchfile = expand(a:1, ':p')
-  if a:0 > 1
-    let patch = a:2
-  endif
-  if ! filereadable(patchfile)
-    let g:patches['reason'] = "File " . patchfile . " is not readable"
-    return
-  endif
-  unlet! filterdiffcmd
-  let filterdiffcmd = '' . g:patchreview_filterdiff . ' --list -s ' . patchfile
-  let fileslist = split(system(filterdiffcmd), '[\r\n]')
-  for filewithchangetype in fileslist
-    if filewithchangetype !~ '^[!+-] '
-      Pecho '*** Skipping review generation due to unknown change for [' . filewithchangetype . ']'
-      continue
-    endif
-
-    unlet! this_patch
-    let this_patch = {}
-
-    unlet! relpath
-    let relpath = substitute(filewithchangetype, '^. ', '', '')
-
-    let this_patch['filename'] = relpath
-
-    if filewithchangetype =~ '^! '
-      let this_patch['type'] = '!'
-    elseif filewithchangetype =~ '^+ '
-      let this_patch['type'] = '+'
-    elseif filewithchangetype =~ '^- '
-      let this_patch['type'] = '-'
-    endif
-
-    unlet! filterdiffcmd
-    let filterdiffcmd = '' . g:patchreview_filterdiff . ' -i ' . relpath . ' ' . patchfile
-    let this_patch['content'] = split(system(filterdiffcmd), '\n')
-    let g:patches['patch'] += [this_patch]
-    Debug "Patch collected for " . relpath
-  endfor
-endfunction
-"}}}
-
-function! <SID>ExtractDiffsPureVim(...)                                   "{{{
-  " Sets g:patches = {'reason':'', 'patch':[
-  " {
-  "  'filename': filepath
-  "  'type'    : '+' | '-' | '!'
-  "  'content' : patch text for this file
-  " },
-  " ...
-  " ]}
-  let g:patches = {'reason' : '', 'patch' : []}
-  " TODO : User pointers into lines list rather then use collect
-  if a:0 == 0
-    let g:patches['reason'] = "ExtractDiffsPureVim expects at least a patchfile argument"
+    let g:patches['reason'] = "ExtractDiffs expects at least a patchfile argument"
     return
   endif
   let patchfile = expand(a:1, ':p')
@@ -653,13 +591,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   endif
   Pecho 'Source directory: ' . getcwd()
   Pecho '------------------'
-  if s:PR_checkBinary('filterdiff')
-    Debug "Using filterdiff"
-    call s:ExtractDiffsNative(PatchFilePath)
-  else
-    Debug "Using own diff extraction (slower)"
-    call s:ExtractDiffsPureVim(PatchFilePath)
-  endif
+  call s:ExtractDiffs(PatchFilePath)
   for patch in g:patches['patch']
     if patch.type !~ '^[!+-]$'
       Pecho '*** Skipping review generation due to unknown change [' . patch.type . ']', 1
@@ -863,40 +795,6 @@ function! patchreviewlib#DiffReview(...)                                        
 endfunction
 "}}}
 
-" Development                                                               "{{{
-if exists('g:patchreview_debug')
-  " Tests
-  function! <SID>PRExtractTestNative(...)
-    "let patchfiles = glob(expand(a:1) . '/?*')
-    "for fname in split(patchfiles)
-    call s:PR_wipeMsgBuf()
-    let fname = a:1
-    call s:ExtractDiffsNative(fname)
-    for patch in g:patches['patch']
-      for line in patch.content
-        Pecho line
-      endfor
-    endfor
-    "endfor
-  endfunction
-
-  function! <SID>PRExtractTestVim(...)
-    "let patchfiles = glob(expand(a:1) . '/?*')
-    "for fname in split(patchfiles)
-    call s:PR_wipeMsgBuf()
-    let fname = a:1
-    call s:ExtractDiffsPureVim(fname)
-    for patch in g:patches['patch']
-      for line in patch.content
-        Pecho line
-      endfor
-    endfor
-    "endfor
-  endfunction
-
-  command! -nargs=+ -complete=file PRTestVim call s:PRExtractTestVim(<f-args>)
-  command! -nargs=+ -complete=file PRTestNative call s:PRExtractTestNative(<f-args>)
-endif
 "}}}
 
 " modeline

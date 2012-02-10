@@ -9,6 +9,10 @@
 "
 " Changelog :
 "
+"   0.4 - Remove patchutils use completely as we can do more with the pure
+"         vim version
+"       - Added patchreview_postfunc for long postreview jobs
+"
 "   0.3.2 - Some diff extraction fixes and behavior improvement.
 "
 "   0.3.1 - Do not open the status buffer in all tabs.
@@ -64,17 +68,6 @@
 "      command on Linux, Mac OS X, *BSD, Cygwin or /usr/bin/gpatch on newer
 "      Solaris.
 "
-"   3) Optional (but recommended for speed)
-"
-"      Install patchutils ( http://cyberelk.net/tim/patchutils/ ) for your
-"      OS. For windows it is availble from Cygwin
-"
-"         http://www.cygwin.com
-"
-"      or GnuWin32
-"
-"         http://gnuwin32.sourceforge.net/
-"
 "   Install:
 "
 "   1) Extract the zip in your $HOME/.vim or $VIM/vimfiles directory and
@@ -85,14 +78,9 @@
 "
 "  Configuration:
 "
-"  Optionally, specify the locations to these filterdiff and patch commands
-"  and location of a temporary directory to use in your .vimrc.
+"  Optionally, specify the locations to the patch command in your .vimrc.
 "
 "      let g:patchreview_patch       = '/path/to/gnu/patch'
-"
-"      " If you are using filterdiff
-"      let g:patchreview_filterdiff  = '/path/to/filterdiff'
-"
 "
 " Usage:
 "
@@ -100,11 +88,11 @@
 "
 ""}}}
 
+" init " {{{
 " Enabled only during development
-" unlet! g:loaded_patchreview " DEBUG
-" unlet! g:patchreview_patch " DEBUG
-" unlet! g:patchreview_filterdiff " DEBUG
-" let g:patchreview_patch = 'patch'    " DEBUG
+" unlet! g:loaded_patchreview
+" unlet! g:patchreview_patch
+" let g:patchreview_patch = 'patch'
 
 if &cp
   finish
@@ -117,6 +105,7 @@ if ! has('diff')
   call confirm('patchreview.vim plugin needs (G)VIM built with +diff support to work.')
   finish
 endif
+" }}}
 
 " End user commands                                                         "{{{
 "============================================================================

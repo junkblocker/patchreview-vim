@@ -54,23 +54,6 @@ PatchReview Options                                     *patchreview-options*
         (On *nix systems) >
            let g:patchreview_patch = '/usr/bin/gpatch'
 <
-
-  g:patchreview_filterdiff = {string}
-      Optional path to filterdiff binary. PatchReview tries to locate
-      filterdiff on system path automatically. If the binary is not on system
-      path, this option tell PatchReview the full path to the binary.  This
-      option, if specified, overrides the default filterdiff binary on the
-      path.
-
-     examples:
-        (On Windows with Cygwin)
->
-           let g:patchreview_filterdiff = 'c:\\cygwin\\bin\\filterdiff.exe'
-<
-        (On *nix systems)
->
-           let g:patchreview_filterdiff = '/usr/bin/filterdiff'
-<
 =============================================================================
 
 PatchReview Usage                                         *patchreview-usage*
