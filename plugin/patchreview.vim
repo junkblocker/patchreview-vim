@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 0.3.2                                      "{{{
+" Version       : 0.4 " {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2012 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -25,7 +25,7 @@
 "
 "   0.2.1 - Minor temp directory autodetection logic and cleanup
 "
-"   0.2 - Removed the need for filterdiff by implemeting it in pure vim script
+"   0.2 - Removed the need for filterdiff by implementing it in pure vim script
 "       - Added DiffReview command for reverse (changed repository to
 "         pristine state) reviews.
 "         (PatchReview does pristine repository to patch review)
@@ -37,10 +37,7 @@
 "}}}
 
 " TODO {{{
-" 1) If a .sw? is present or file is open in another instance, vim pauses for
-"    it. Maybe use SwapExists.
-" 2) git staged support?
-" 3) See if Windows line endings have an issue.
+" 1) git staged support?
 " }}}
 "
 " Documentation:                                                         "{{{

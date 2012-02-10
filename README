@@ -1,5 +1,6 @@
-1) Copy patchreview.vim to your ~/.vim/plugin directory and patchreview.txt to
-   your ~/.vim/doc directory.
+1) Copy patchreview.vim to your ~/.vim/plugin directory, patchreview.txt to
+   your ~/.vim/doc directory and patchreviewlib.vim to your ~/.vim/autoload
+   directory.
 
 2) Open vim and do
 

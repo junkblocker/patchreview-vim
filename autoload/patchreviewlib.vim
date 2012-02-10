@@ -536,14 +536,11 @@ function! State(...)  " For easy manipulation of diff extraction state      "{{{
     endif
     return s:STATE
   endif
-  if exists('g:patchreview_postfunc')
-    call call(g:patchreview_postfunc, ['Patch Review'])
-  endif
 endfunction
 com! -nargs=+ -complete=expression State call State(<args>)
 "}}}
 
-function! patchreviewlibPatchReview(...)                                           "{{{
+function! patchreviewlib#PatchReview(...)                                           "{{{
   augroup patchreview_plugin
     autocmd!
 
