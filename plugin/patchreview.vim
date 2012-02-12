@@ -9,7 +9,8 @@
 "
 " Changelog :
 "
-"   0.4 - Remove patchutils use completely as we can do more with the pure
+"   0.4 - Handle paths with special characters in them
+"       - Remove patchutils use completely as we can do more with the pure
 "         vim version
 "       - Added patchreview_postfunc for long postreview jobs
 "
