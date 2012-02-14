@@ -9,10 +9,12 @@
 "
 " Changelog :
 "
-"   0.4 - Handle paths with special characters in them
+"   0.4 - Added ReversePatchReview command
+"       - Handle paths with special characters in them
 "       - Remove patchutils use completely as we can do more with the pure
 "         vim version
-"       - Added patchreview_postfunc for long postreview jobs
+"       - Show diff if rejections but partially applied
+"       - Added patchreview_pre/postfunc for long postreview jobs
 "
 "   0.3.2 - Some diff extraction fixes and behavior improvement.
 "
@@ -555,6 +557,41 @@ function! patchreviewlib#PatchReview(...)                                       
 endfunction
 "}}}
 
+function! patchreviewlib#ReversePatchReview(...)                                    "{{{
+  if exists('g:patchreview_prefunc')
+    call call(g:patchreview_prefunc, ['Reverse Patch Review'])
+  endif
+  augroup patchreview_plugin
+    autocmd!
+
+    " When opening files which may be open elsewhere, open them in read only
+    " mode
+    au SwapExists * :let v:swapchoice='o'
+  augroup end
+  let s:save_shortmess = &shortmess
+  let s:save_aw = &autowrite
+  let s:save_awa = &autowriteall
+  let s:origtabpagenr = tabpagenr()
+  let s:equalalways = &equalalways
+  let s:eadirection = &eadirection
+  set equalalways
+  set eadirection=hor
+  set shortmess=aW
+  call s:WipeMsgBuf()
+  let s:reviewmode = 'rpatch'
+  call s:_GenericReview(a:000)
+  let &eadirection = s:eadirection
+  let &equalalways = s:equalalways
+  let &autowriteall = s:save_awa
+  let &autowrite = s:save_aw
+  let &shortmess = s:save_shortmess
+  augroup! patchreview_plugin
+  if exists('g:patchreview_postfunc')
+    call call(g:patchreview_postfunc, ['Reverse Patch Review'])
+  endif
+endfunction
+"}}}
+
 function! <SID>_GenericReview(argslist)                                   "{{{
   " diff mode:
   "   arg1 = patchfile
@@ -576,7 +613,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     return
   endif
 
-  if s:reviewmode == 'diff'
+  if s:reviewmode == 'diff' || s:reviewmode == 'rpatch'
     let patch_R_option = ' -t -R '
   elseif s:reviewmode == 'patch'
     let patch_R_option = ''
@@ -585,19 +622,23 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     return
   endif
 
-  " Check passed arguments
-  if len(a:argslist) == 0
-    PREcho 'PatchReview command needs at least one argument specifying a patchfile path.'
-    return
-  endif
-  let l:strip_count = 0
-  if len(a:argslist) >= 1 && ((s:reviewmode == 'patch' && len(a:argslist) <= 3) || (s:reviewmode == 'diff' && len(a:argslist) == 2))
-    let l:patch_file_path = expand(a:argslist[0], ':p')
-    if ! filereadable(l:patch_file_path)
-      PREcho 'File [' . l:patch_file_path . '] is not accessible.'
-      return
+  " ----------------------------- patch ------------------------------------
+  if s:reviewmode =~ 'patch'
+    let l:argc = len(a:argslist)
+    if l:argc == 0 || l:argc > 3
+      if s:reviewmode == 'patch'
+        PREcho 'PatchReview command needs 1 to 3 arguments.'
+        return
+      endif
+      if s:reviewmode == 'rpatch'
+        PREcho 'ReversePatchReview command needs 1 to 3 arguments.'
+        return
+      endif
     endif
-    if len(a:argslist) >= 2 && s:reviewmode == 'patch'
+    " ARG[0]: patch file
+    let l:patch_file_path = a:argslist[0]
+    " ARG[1]: directory [optional]
+    if len(a:argslist) >= 2
       let s:src_dir = expand(a:argslist[1], ':p')
       if ! isdirectory(s:src_dir)
         PREcho '[' . s:src_dir . '] is not a directory'
@@ -610,37 +651,42 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         return
       endtry
     endif
-    if s:reviewmode == 'diff'
-      " passed in by default
-      let l:strip_count = eval(a:argslist[1])
-    elseif s:reviewmode == 'patch'
-      let l:strip_count = 1
-      " optional strip count
-      if len(a:argslist) == 3
-        let l:strip_count = eval(a:argslist[2])
-      endif
+    " ARG[2]: strip count [optional]
+    if len(a:argslist) == 3
+      let l:strip_count = eval(a:argslist[2])
+"        PRDebug 'Strip count now ' . l:strip_count
     endif
+  " ----------------------------- diff -------------------------------------
+  elseif s:reviewmode == 'diff'
+    if len(a:argslist) > 2
+      PREcho 'Fatal internal error in patchreview.vim plugin'
+      return
+    endif
+    let l:patch_file_path = a:argslist[0]
+    " passed in by default
+    let l:strip_count = eval(a:argslist[1])
+"      PRDebug 'Strip count now ' . l:strip_count
   else
-    if s:reviewmode == 'patch'
-      PREcho 'PatchReview command needs at most three arguments: patchfile path, optional source directory path and optional strip count.'
-    elseif s:reviewmode == 'diff'
-      PREcho 'DiffReview command accepts no arguments.'
-    endif
-    return
-  endif
+    PREcho 'Fatal internal error in patchreview.vim plugin'
+  endif " diff
 
   " Verify that patch command and temporary directory are available or specified
   if ! s:CheckBinary('patch')
     return
   endif
 
-  " Requirements met, now execute
-  let l:patch_file_path = fnamemodify(l:patch_file_path, ':p')
-  if s:reviewmode == 'patch'
-    PREcho 'Patch file      : ' . l:patch_file_path
-  endif
   PREcho 'Source directory: ' . getcwd()
   PREcho '------------------'
+  if exists('l:strip_count')
+    let l:defsc = l:strip_count
+  elseif s:reviewmode !~ 'patch'
+    PREcho 'Fatal internal error in patchreview.vim plugin'
+  endif
+  "Requirements met, now execute
+  let l:patch_file_path = fnamemodify(l:patch_file_path, ':p')
+  if s:reviewmode =~ 'patch'
+    PREcho 'Patch file      : ' . l:patch_file_path
+  endif
   call s:ExtractDiffs(l:patch_file_path)
   let l:this_patch_num = 0
   let l:total_patches = len(g:patches['patch'])
@@ -664,19 +710,19 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       let l:stripmore -= 1
     endwhile
     if patch.type == '!'
-      if s:reviewmode == 'patch'
+      if s:reviewmode =~ 'patch'
         let msgtype = 'Patch modifies file: '
       elseif s:reviewmode == 'diff'
         let msgtype = 'File has changes: '
       endif
     elseif patch.type == '+'
-      if s:reviewmode == 'patch'
+      if s:reviewmode =~ 'patch'
         let msgtype = 'Patch adds file    : '
       elseif s:reviewmode == 'diff'
         let msgtype = 'New file        : '
       endif
     elseif patch.type == '-'
-      if s:reviewmode == 'patch'
+      if s:reviewmode =~ 'patch'
         let msgtype = 'Patch removes file : '
       elseif s:reviewmode == 'diff'
         let msgtype = 'Removed file    : '
@@ -686,15 +732,16 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     if buflisted(bufnum) && getbufvar(bufnum, '&mod')
       PREcho 'Old buffer for file [' . l:relpath . '] exists in modified state. Skipping review.'
       continue
+      unlet! patch
     endif
     let l:tmp_patch = tempname()
     let l:tmp_patched = tempname()
-    let l:tmp_patched_rejected = l:tmp_patched . '.rej'
+    let l:tmp_patched_rej = l:tmp_patched . '.rej'  " Rejection file created by patch
 
     try
       " write patch for patch.filename into l:tmp_patch
       call writefile(patch.content, l:tmp_patch)
-      if patch.type == '+' && s:reviewmode == 'patch'
+      if patch.type == '+' && s:reviewmode =~ 'patch'
 "        PRDebug 'Case 1'
         let l:inputfile = ''
         let patchcmd = '!' . fnameescape(g:patchreview_patch) . patch_R_option . ' -s -o ' . fnameescape(l:tmp_patched) . ' ' . fnameescape(l:inputfile) . ' < ' . fnameescape(l:tmp_patch) . ' 2>/dev/null'
@@ -722,7 +769,8 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       endif
       let s:origtabpagenr = tabpagenr()
       silent! exe 'tabedit ' . l:stripped_rel_path
-      if ! error
+      let l:winnum = winnr()
+      if ! error || filereadable(l:tmp_patched)
         if exists('patchcmd')
           " modelines in loaded files mess with diff comparison
           let s:keep_modeline=&modeline
@@ -746,10 +794,37 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       else
         if ! filereadable(l:inputfile)
           PREcho 'ERROR: Original file ' . l:inputfile . ' does not exist.'
+          " modelines in loaded files mess with diff comparison
+          let s:keep_modeline=&modeline
+          let &modeline=0
+          silent! exe 'topleft split ' . fnameescape(l:tmp_patch)
+          setlocal noswapfile
+          setlocal syntax=none
+          setlocal buftype=nofile
+          setlocal bufhidden=delete
+          setlocal nobuflisted
+          setlocal modifiable
+          setlocal nowrap
+          silent! 0f
+          let &modeline=s:keep_modeline
         endif
       endif
-      if filereadable(l:tmp_patched_rejected)
-        silent! exe 'topleft 5split ' . fnameescape(l:tmp_patched_rejected)
+      if filereadable(l:tmp_patched_rej)
+        " modelines in loaded files mess with diff comparison
+        let s:keep_modeline=&modeline
+        let &modeline=0
+        silent! exe 'topleft split ' . fnameescape(l:tmp_patched_rej)
+        setlocal noswapfile
+        setlocal syntax=none
+        setlocal bufhidden=delete
+        setlocal nobuflisted
+        setlocal modifiable
+        setlocal nowrap
+        " Remove buffer name
+        setlocal buftype=nofile
+        silent! 0f
+        wincmd p
+        let &modeline=s:keep_modeline
         PREcho msgtype . '*** REJECTED *** ' . l:relpath
       else
         PREcho msgtype . ' ' . l:relpath
@@ -757,7 +832,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     finally
       call delete(l:tmp_patch)
       call delete(l:tmp_patched)
-      call delete(l:tmp_patched_rejected)
+      call delete(l:tmp_patched_rej)
       unlet! patch
     endtry
   endfor

@@ -9,9 +9,11 @@
 "
 " Changelog :
 "
-"   0.4 - Handle paths with special characters in them
+"   0.4 - Added ReversePatchReview command
+"       - Handle paths with special characters in them
 "       - Remove patchutils use completely as we can do more with the pure
 "         vim version
+"       - Show diff if rejections but partially applied
 "       - Added patchreview_postfunc for long postreview jobs
 "
 "   0.3.2 - Some diff extraction fixes and behavior improvement.
@@ -112,6 +114,9 @@ endif
 "============================================================================
 " :PatchReview
 command! -nargs=* -complete=file PatchReview call patchreviewlib#PatchReview (<f-args>)
+
+" :ReversePatchReview
+command! -nargs=* -complete=file ReversePatchReview call patchreviewlib#ReversePatchReview (<f-args>)
 
 " :DiffReview
 command! -nargs=0 DiffReview call patchreviewlib#DiffReview()

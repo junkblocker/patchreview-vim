@@ -15,6 +15,7 @@ CONTENTS                    *patchreview* *diffreview* *patchreview-contents*
   4. PatchReview Usage................................: |patchreview-usage|
      4.1 DiffReview Usage.............................: |:DiffReview|
      4.2 PatchReview Usage............................: |:PatchReview|
+     4.3 ReversePatchReview Usage...................  : |:ReversePatchReview|
 
 =============================================================================
 
@@ -56,7 +57,7 @@ PatchReview Options                                     *patchreview-options*
 <
 =============================================================================
 
-PatchReview Usage                                         *patchreview-usage*
+PatchReview Usage                      *patchreview-usage* *diffreview-usage*
                                                                 *:DiffReview*
 
   :DiffReview
@@ -74,6 +75,17 @@ PatchReview Usage                                         *patchreview-usage*
     Perform a patch review in the current directory based on the supplied
     patchfile_path. If optional_source_directory is specified, patchreview is
     done on that directory.
+
+    Note Only context or unified diff format patches are supported.
+
+                                                         *:ReversePatchReview*
+
+  :ReversePatchReview patchfile_path [optional_source_directory]
+
+    Perform a reverse patch review of an already applied patch in the current
+    directory based on the supplied patchfile_path.  If
+    optional_source_directory is specified, patchreview is done on that
+    directory.
 
     Note Only context or unified diff format patches are supported.
 
