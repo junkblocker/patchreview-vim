@@ -9,12 +9,13 @@
 "
 " Changelog :
 "
-"   0.4 - Added ReversePatchReview command
+"   0.4 - Added wiggle support
+"       - Added ReversePatchReview command
 "       - Handle paths with special characters in them
 "       - Remove patchutils use completely as we can do more with the pure
 "         vim version
 "       - Show diff if rejections but partially applied
-"       - Added patchreview_postfunc for long postreview jobs
+"       - Added patchreview_pre/postfunc for long postreview jobs
 "
 "   0.3.2 - Some diff extraction fixes and behavior improvement.
 "

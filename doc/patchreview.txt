@@ -55,6 +55,19 @@ PatchReview Options                                     *patchreview-options*
         (On *nix systems) >
            let g:patchreview_patch = '/usr/bin/gpatch'
 <
+  g:patchreview_wiggle = {string}
+      Optional path to the wiggle ( http://linux.die.net/man/1/wiggle )
+      utility. If specified, |PatchReview| and |ReversePatchReview| commands
+      use it to create an addition diff when a review fails with some
+      conflicts/rejections.
+
+    examples:
+        (On Windows with Cygwin) >
+           let g:patchreview_patch = 'c:\\cygwin\\bin\\patch.exe'
+<
+        (On *nix systems) >
+           let g:patchreview_patch = '/usr/bin/gpatch'
+<
 =============================================================================
 
 PatchReview Usage                      *patchreview-usage* *diffreview-usage*

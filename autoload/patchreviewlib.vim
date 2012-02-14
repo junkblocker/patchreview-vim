@@ -9,7 +9,8 @@
 "
 " Changelog :
 "
-"   0.4 - Added ReversePatchReview command
+"   0.4 - Added wiggle support
+"       - Added ReversePatchReview command
 "       - Handle paths with special characters in them
 "       - Remove patchutils use completely as we can do more with the pure
 "         vim version
@@ -592,6 +593,41 @@ function! patchreviewlib#ReversePatchReview(...)                                
 endfunction
 "}}}
 
+function! <SID>Wiggle(out, rej) " {{{
+  if ! executable('wiggle')
+    return
+  endif
+  let l:wiggle_out = tempname()
+  let v:errmsg = ''
+  let l:cout = system('wiggle --merge ' . shellescape(a:out) . ' ' . shellescape(a:rej) . ' > ' . shellescape(l:wiggle_out))
+  if v:errmsg != '' || v:shell_error
+    PREcho 'ERROR: Wiggle was not completely successful.'
+    if v:errmsg != ''
+      PREcho 'ERROR: ' . v:errmsg
+    endif
+  endif
+  if filereadable(l:wiggle_out)
+    " modelines in loaded files mess with diff comparison
+    let s:keep_modeline=&modeline
+    let &modeline=0
+    silent! exe 'vert diffsplit ' . fnameescape(l:wiggle_out)
+    setlocal noswapfile
+    setlocal syntax=none
+    setlocal bufhidden=delete
+    setlocal nobuflisted
+    setlocal modifiable
+    setlocal nowrap
+    " Remove buffer name
+    if ! exists('g:patchreview_persist')
+      setlocal buftype=nofile
+      silent! 0f
+    endif
+    let &modeline=s:keep_modeline
+    wincmd p
+  endif
+endfunction
+" }}}
+
 function! <SID>_GenericReview(argslist)                                   "{{{
   " diff mode:
   "   arg1 = patchfile
@@ -764,7 +800,11 @@ function! <SID>_GenericReview(argslist)                                   "{{{
           PREcho 'ERROR: Could not execute patch command.'
           PREcho 'ERROR:     ' . patchcmd
           PREcho 'ERROR: ' . v:errmsg
-          PREcho 'ERROR: Diff skipped.'
+          if filereadable(l:tmp_patched)
+            PREcho 'ERROR: Diff partially shown.'
+          else
+            PREcho 'ERROR: Diff skipped.'
+          endif
         endif
       endif
       let s:origtabpagenr = tabpagenr()
@@ -776,7 +816,6 @@ function! <SID>_GenericReview(argslist)                                   "{{{
           let s:keep_modeline=&modeline
           let &modeline=0
           silent! exe 'vert diffsplit ' . fnameescape(l:tmp_patched)
-          setlocal buftype=nofile
           setlocal noswapfile
           setlocal syntax=none
           setlocal bufhidden=delete
@@ -784,9 +823,9 @@ function! <SID>_GenericReview(argslist)                                   "{{{
           setlocal modifiable
           setlocal nowrap
           " Remove buffer name
+          setlocal buftype=nofile
           silent! 0f
-          " Switch to original to get a nice tab title
-          silent! wincmd p
+          wincmd p
           let &modeline=s:keep_modeline
         else
           silent! vnew
@@ -808,6 +847,8 @@ function! <SID>_GenericReview(argslist)                                   "{{{
           silent! 0f
           let &modeline=s:keep_modeline
         endif
+        wincmd p
+        let &modeline=s:keep_modeline
       endif
       if filereadable(l:tmp_patched_rej)
         " modelines in loaded files mess with diff comparison
@@ -826,6 +867,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         wincmd p
         let &modeline=s:keep_modeline
         PREcho msgtype . '*** REJECTED *** ' . l:relpath
+        call s:Wiggle(l:tmp_patched, l:tmp_patched_rej)
       else
         PREcho msgtype . ' ' . l:relpath
       endif
