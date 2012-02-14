@@ -266,17 +266,22 @@ function! <SID>ExtractDiffs(...)                                   "{{{
       let l:mat = matchlist(l:line, '^--- \([^\t]\+\).*$')
       if ! empty(l:mat) && l:mat[1] != ''
         PRState 'MAYBE_UNIFIED_DIFF'
-        let p_first_file = l:mat[1]
-"        PRDebug 'p_first_file set to ' . p_first_file
+        let l:p_first_file = l:mat[1]
+"        PRDebug 'l:p_first_file set to ' . l:p_first_file
         let l:collect = [l:line]
         continue
       endif
       let l:mat = matchlist(l:line, '^\*\*\* \([^\t]\+\).*$')
       if ! empty(l:mat) && l:mat[1] != ''
         PRState 'MAYBE_CONTEXT_DIFF'
-        let p_first_file = l:mat[1]
-"        PRDebug 'p_first_file set to ' . p_first_file
+        let l:p_first_file = l:mat[1]
+"        PRDebug 'l:p_first_file set to ' . l:p_first_file
         let l:collect = [l:line]
+        continue
+      endif
+      let l:mat = matchlist(l:line, '^\(Binary files\|Files\) \(.\+\) and \(.+\) differ$')
+      if ! empty(l:mat) && l:mat[2] != '' && l:mat[3] != ''
+        PREcho 'Ignoring ' . tolower(l:mat[1]) . ' ' . l:mat[2] ' and ' . l:mat[3]
         continue
       endif
       continue
@@ -291,7 +296,7 @@ function! <SID>ExtractDiffs(...)                                   "{{{
       endif
       let l:p_second_file = l:mat[1]
 "      PRDebug 'l:p_second_file set to ' . l:p_second_file
-      if p_first_file == '/dev/null'
+      if l:p_first_file == '/dev/null'
         if l:p_second_file == '/dev/null'
           let g:patches['fail'] = "Malformed diff found at line " . l:line_num
           return
@@ -302,11 +307,12 @@ function! <SID>ExtractDiffs(...)                                   "{{{
       else
         if l:p_second_file == '/dev/null'
           let l:p_type = '-'
-          let l:filepath = p_first_file
+          let l:filepath = l:p_first_file
 "          PRDebug "Patch deletes file " . l:filepath
         else
           let l:p_type = '!'
           let l:filepath = l:p_second_file
+"          PRDebug "Patch modifies file " . l:filepath
         endif
       endif
       PRStatus 'Collecting ' . l:filepath
@@ -403,7 +409,7 @@ function! <SID>ExtractDiffs(...)                                   "{{{
       endif
       let l:p_second_file = l:mat[1]
 "      PRDebug 'l:p_second_file set to ' . l:p_second_file
-      if p_first_file == '/dev/null'
+      if l:p_first_file == '/dev/null'
         if l:p_second_file == '/dev/null'
           let g:patches['fail'] = "Malformed diff found at line " . l:line_num
           return
@@ -414,11 +420,11 @@ function! <SID>ExtractDiffs(...)                                   "{{{
       else
         if l:p_second_file == '/dev/null'
           let l:p_type = '-'
-          let l:filepath = p_first_file
+          let l:filepath = l:p_first_file
 "          PRDebug 'Patch deletes file ' . l:filepath
         else
           let l:p_type = '!'
-          let l:filepath = l:p_second_file
+          let l:filepath = l:p_first_file
 "          PRDebug 'Patch modifies file ' . l:filepath
         endif
       endif
@@ -633,9 +639,14 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   PREcho 'Source directory: ' . getcwd()
   PREcho '------------------'
   call s:ExtractDiffs(l:patch_file_path)
+  let l:this_patch_num = 0
+  let l:total_patches = len(g:patches['patch'])
   for patch in g:patches['patch']
+    let l:this_patch_num += 1
+    PRStatus 'Processing ' . l:this_patch_num . '/' . l:total_patches . ' ' . patch.filename
     if patch.type !~ '^[!+-]$'
       PREcho '*** Skipping review generation due to unknown change [' . patch.type . ']'
+      unlet! patch
       continue
     endif
     unlet! l:relpath
@@ -678,7 +689,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     let l:tmp_patched_rejected = l:tmp_patched . '.rej'
 
     try
-      " write patch for patch.filename into tmp_patch
+      " write patch for patch.filename into l:tmp_patch
       call writefile(patch.content, l:tmp_patch)
       if patch.type == '+' && s:reviewmode == 'patch'
 "        PRDebug 'Case 1'
@@ -741,7 +752,6 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         PREcho msgtype . ' ' . l:relpath
       endif
     finally
-      silent! exe 'tabn ' . s:origtabpagenr
       call delete(l:tmp_patch)
       call delete(l:tmp_patched)
       call delete(l:tmp_patched_rejected)
@@ -775,7 +785,7 @@ function! patchreviewlib#DiffReview(...)                                        
   set shortmess=aW
   call s:WipeMsgBuf()
 
-  let vcsdict = {
+  let l:vcsdict = {
                   \'Mercurial'  : {'dir': '.hg',  'binary': 'hg',  'strip': 1, 'diffargs': 'diff'                  },
                   \'Bazaar-NG'  : {'dir': '.bzr', 'binary': 'bzr', 'strip': 0, 'diffargs': 'diff'                  },
                   \'monotone'   : {'dir': '_MTN', 'binary': 'mtn', 'strip': 0, 'diffargs': 'diff --unified'        },
@@ -787,19 +797,19 @@ function! patchreviewlib#DiffReview(...)                                        
   unlet! s:the_diff_cmd
   unlet! l:vcs
   if ! exists('g:patchreview_diffcmd')
-    for key in keys(vcsdict)
-      if isdirectory(vcsdict[key]['dir'])
-        if ! s:CheckBinary(vcsdict[key]['binary'])
-          PREcho 'Current directory looks like a ' . vcsdict[key] . ' repository but ' . vcsdist[key]['binary'] . ' command was not found on path.'
+    for key in keys(l:vcsdict)
+      if isdirectory(l:vcsdict[key]['dir'])
+        if ! s:CheckBinary(l:vcsdict[key]['binary'])
+          PREcho 'Current directory looks like a ' . l:vcsdict[key] . ' repository but ' . vcsdist[key]['binary'] . ' command was not found on path.'
           let &shortmess = s:save_shortmess
           augroup! patchreview_plugin
           return
         else
-          let s:the_diff_cmd = vcsdict[key]['binary'] . ' ' . vcsdict[key]['diffargs']
-          let strip = vcsdict[key]['strip']
+          let s:the_diff_cmd = l:vcsdict[key]['binary'] . ' ' . l:vcsdict[key]['diffargs']
+          let l:strip = l:vcsdict[key]['strip']
 
           PREcho 'Using [' . s:the_diff_cmd . '] to generate diffs for this ' . key . ' review.'
-          let l:vcs = vcsdict[key]['binary']
+          let l:vcs = l:vcsdict[key]['binary']
           break
         endif
       else
@@ -808,7 +818,7 @@ function! patchreviewlib#DiffReview(...)                                        
     endfor
   else
     let s:the_diff_cmd = g:patchreview_diffcmd
-    let strip = 0
+    let l:strip = 0
   endif
   if ! exists('s:the_diff_cmd')
     PREcho 'Please define g:patchreview_diffcmd and make sure you are in a VCS controlled top directory.'
@@ -833,7 +843,7 @@ function! patchreviewlib#DiffReview(...)                                        
       return
     endif
     let s:reviewmode = 'diff'
-    call s:_GenericReview([l:outfile, strip])
+    call s:_GenericReview([l:outfile, l:strip])
   finally
     call delete(l:outfile)
     let &eadirection = s:eadirection
