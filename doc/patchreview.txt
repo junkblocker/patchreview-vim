@@ -80,11 +80,13 @@ PatchReview Usage                                         *patchreview-usage*
 
 Hooks                                                      *:patchreview-hooks*
 
+  g:patchreview_prefunc = '{function}'
   g:patchreview_postfunc = '{function}'
 
-      A function to be called on finishing review. For example, the following
-      example shows a way to use this to create a way to get notifications when
-      a long review finishes on a Mac OS X machine. >
+      A function to be called before starting or finishing review
+      respectively. For example, the following example shows a way to use this
+      to create a way to get notifications when a long review finishes on a
+      Mac OS X machine. >
 
       function MyNotify(review_type)
           system('say "' . review_type . ' completed"')

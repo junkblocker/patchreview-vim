@@ -521,6 +521,9 @@ endfunction
 "}}}
 
 function! patchreviewlib#PatchReview(...)                                           "{{{
+  if exists('g:patchreview_prefunc')
+    call call(g:patchreview_prefunc, ['Patch Review'])
+  endif
   augroup patchreview_plugin
     autocmd!
 
@@ -547,7 +550,7 @@ function! patchreviewlib#PatchReview(...)                                       
   let &shortmess = s:save_shortmess
   augroup! patchreview_plugin
   if exists('g:patchreview_postfunc')
-    call call(g:patchreview_postfunc, ['Reverse Patch Review'])
+    call call(g:patchreview_postfunc, ['Patch Review'])
   endif
 endfunction
 "}}}
@@ -765,6 +768,9 @@ endfunction
 "}}}
 
 function! patchreviewlib#DiffReview(...)                                            "{{{
+  if exists('g:patchreview_prefunc')
+    call call(g:patchreview_prefunc, ['Diff Review'])
+  endif
   augroup patchreview_plugin
     autocmd!
 
