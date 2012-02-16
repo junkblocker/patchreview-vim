@@ -7,48 +7,8 @@
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
-" Changelog :
-"
-"   0.4 - Added wiggle support
-"       - Added ReversePatchReview command
-"       - Added automatic strip count guessing support
-"       - Handle paths with special characters in them
-"       - Remove patchutils use completely as we can do more with the pure
-"         vim version
-"       - Show diff if rejections but partially applied
-"       - Added patchreview_pre/postfunc for long postreview jobs
-"
-"   0.3.2 - Some diff extraction fixes and behavior improvement.
-"
-"   0.3.1 - Do not open the status buffer in all tabs.
-"
-"   0.3 - Added git diff support
-"       - Added some error handling for open files by opening them in read
-"         only mode
-"
-"   0.2.2 - Security fixes by removing custom tempfile creation
-"         - Removed need for DiffReviewCleanup/PatchReviewCleanup
-"         - Better command execution error detection and display
-"         - Improved diff view and folding by ignoring modelines
-"         - Improved tab labels display
-"
-"   0.2.1 - Minor temp directory autodetection logic and cleanup
-"
-"   0.2 - Removed the need for filterdiff by implementing it in pure vim script
-"       - Added DiffReview command for reverse (changed repository to
-"         pristine state) reviews.
-"         (PatchReview does pristine repository to patch review)
-"       - DiffReview does automatic detection and generation of diffs for
-"         various Source Control systems
-"       - Skip load if VIM 7.0 or higher unavailable
-"
-"   0.1 - First released
 "}}}
 
-" TODO {{{
-" 1) git staged support?
-" }}}
-"
 " Documentation:                                                         "{{{
 " ===========================================================================
 " This plugin allows single or multiple, patch or diff based code reviews to
@@ -115,15 +75,18 @@ endif
 " End user commands                                                         "{{{
 "============================================================================
 " :PatchReview
-command! -nargs=* -complete=file PatchReview call patchreviewlib#PatchReview (<f-args>)
+command! -nargs=* -complete=file PatchReview        unlet! g:patchreview_persist | call patchreview#PatchReview (<f-args>)
+command! -nargs=* -complete=file PatchReviewPersist let g:patchreview_persist=1  | call patchreview#PatchReview (<f-args>)
 
 " :ReversePatchReview
-command! -nargs=* -complete=file ReversePatchReview call patchreviewlib#ReversePatchReview (<f-args>)
+command! -nargs=* -complete=file ReversePatchReview        unlet! g:patchreview_persist | call patchreview#ReversePatchReview (<f-args>)
+command! -nargs=* -complete=file ReversePatchReviewPersist let g:patchreview_persist=1  | call patchreview#ReversePatchReview (<f-args>)
 
 " :DiffReview
-command! -nargs=0 DiffReview call patchreviewlib#DiffReview()
+command! -nargs=* -complete=file DiffReview        unlet! g:patchreview_persist | call patchreview#DiffReview(<f-args>)
+command! -nargs=* -complete=file DiffReviewPersist let g:patchreview_persist=1  | call patchreview#DiffReview(<f-args>)
 "}}}
 
-
+"}}}
 " modeline
-" vim: set et fdl=1 fdm=marker fenc=latin ff=unix ft=vim sw=2 sts=0 ts=2 textwidth=78 nowrap :
+" vim: set et fdl=1 fdm=marker fenc=latin ff=unix ft=vim sw=2 sts=0 ts=2 tw=78 nowrap :

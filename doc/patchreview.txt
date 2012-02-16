@@ -1,5 +1,5 @@
 *patchreview.txt* Vim global plugin for doing single, multi-patch or diff code reviews
-                Version  v0.4 (for Vim version 7.0 or higher)
+                Version  v1.0 (for Vim version 7.0 or higher)
 
                 Author: Manpreet Singh < junkblocker@yahoo.com >
                    Copyright (C) 2006-2011 by Manpreet Singh
@@ -73,11 +73,23 @@ PatchReview Options                                     *patchreview-options*
 PatchReview Usage                      *patchreview-usage* *diffreview-usage*
                                                                 *:DiffReview*
 
-  :DiffReview
+  :DiffReview [optional_strip_count] [optional_diff_generation_command]
 
     Perform a diff review in the current directory under version control.
-    Currently supports Mercurial (hg), Subversion (svn), CVS, Bazaar (bzr) and
-    Monotone.
+    Currently supports Mercurial (hg), Subversion (svn), CVS, Bazaar (bzr),
+    Monotone and Perforce (p4) version control systems.
+
+    If the optional diff generation command is supplied, that is used to
+    generate the diff to review instead. This allows you to handle commands
+    which are not the default diff command of the version control system.
+
+    For example, if you want to review git staged diffs, you can run this: >
+
+    :DiffReview 1 git staged --no-color -U5
+<
+    Here, since git diffs have a/ and b/ file path prefixes in the output, a
+    strip level of 1 is specified. However, that is only needed rarely as the
+    plugin tries to guess the correct strip count itself.
 
     Note Only context or unified diff format patches are supported.
 
