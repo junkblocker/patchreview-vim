@@ -11,6 +11,7 @@
 "
 "   0.4 - Added wiggle support
 "       - Added ReversePatchReview command
+"       - Added automatic strip count guessing support
 "       - Handle paths with special characters in them
 "       - Remove patchutils use completely as we can do more with the pure
 "         vim version
@@ -217,6 +218,27 @@ function! <SID>CheckBinary(BinaryName)                                 "{{{
 endfunction
 "}}}
 
+function <SID>GuessStrip(diff_file_path, default_strip) " {{{
+  " XXX: This is sort of unix centric
+  if stridx(a:diff_file_path, '/') != -1
+    let l:splitchar = '/'
+  elseif stridx(a:diff_file_path, '\\') !=  -1
+    let l:splitchar = '\\'
+  else
+    let l:splitchar = '/'
+  endif
+  let l:path = split(a:diff_file_path, l:splitchar)
+  for i in [0, 1, 2]
+    if len(l:path) >= i
+      if filereadable(join(l:path[i : ], l:splitchar))
+        let s:guess_strip[i] += 1
+        return
+      endif
+    endif
+  endfor
+  let s:guess_strip[a:default_strip] += 1
+endfunction
+" }}}
 
 function! <SID>PRState(...)  " For easy manipulation of diff extraction state      "{{{
   if a:0 != 0
@@ -233,7 +255,7 @@ endfunction
 command! -nargs=* PRState call s:PRState(<args>)
 "}}}
 
-function! <SID>ExtractDiffs(...)                                   "{{{
+function! <SID>ExtractDiffs(patch_file, default_strip_count)               "{{{
   " Sets g:patches = {'fail':'', 'patch':[
   " {
   "  'filename': filepath
@@ -242,16 +264,10 @@ function! <SID>ExtractDiffs(...)                                   "{{{
   " },
   " ...
   " ]}
+  let s:guess_strip = [0, 0, 0]
   let g:patches = {'fail' : '', 'patch' : []}
   " TODO : User pointers into lines list rather then use collect
-  if a:0 == 0
-    let g:patches['fail'] = "ExtractDiffs expects at least a patchfile argument"
-    return
-  endif
-  let l:patchfile = expand(a:1, ':p')
-  if a:0 > 1
-    let patch = a:2
-  endif
+  let l:patchfile = expand(a:patch_file, ':p')
   if ! filereadable(l:patchfile)
     let g:patches['fail'] = "File " . l:patchfile . " is not readable"
     return
@@ -387,6 +403,9 @@ function! <SID>ExtractDiffs(...)                                   "{{{
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
         PRStatus 'Collected  ' . l:filepath
+        if l:p_type == '!'
+          call s:GuessStrip(l:filepath, a:default_strip_count)
+        endif
         PRState 'START'
         continue
       endif
@@ -400,6 +419,9 @@ function! <SID>ExtractDiffs(...)                                   "{{{
       unlet! l:this_patch
       let l:line_num -= 1
       PRStatus 'Collected  ' . l:filepath
+      if l:p_type == '!'
+        call s:GuessStrip(l:filepath, a:default_strip_count)
+      endif
       PRState 'START'
       continue
       " }}}
@@ -451,6 +473,9 @@ function! <SID>ExtractDiffs(...)                                   "{{{
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
         PRStatus 'Collected  ' . l:filepath
+        if l:p_type == '!'
+          call s:GuessStrip(l:filepath, a:default_strip_count)
+        endif
         PRState 'START'
         let l:line_num -= 1
       endif
@@ -464,6 +489,9 @@ function! <SID>ExtractDiffs(...)                                   "{{{
           let g:patches['patch'] += [l:this_patch]
           unlet! l:this_patch
           PRStatus 'Collected  ' . l:filepath
+          if l:p_type == '!'
+            call s:GuessStrip(l:filepath, a:default_strip_count)
+          endif
           PRState 'START'
           continue
         endif
@@ -481,6 +509,9 @@ function! <SID>ExtractDiffs(...)                                   "{{{
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
         PRStatus 'Collected  ' . l:filepath
+        if l:p_type == '!'
+          call s:GuessStrip(l:filepath, a:default_strip_count)
+        endif
         let l:line_num -= 1
         PRState 'START'
         continue
@@ -518,6 +549,9 @@ function! <SID>ExtractDiffs(...)                                   "{{{
     unlet! l:this_patch
     unlet! lines
     PRStatus 'Collected  ' . l:filepath
+    if l:p_type == '!'
+      call s:GuessStrip(l:filepath, a:default_strip_count)
+    endif
   endif
   return
 endfunction
@@ -623,7 +657,7 @@ function! <SID>Wiggle(out, rej) " {{{
       silent! 0f
     endif
     let &modeline=s:keep_modeline
-    wincmd p
+    wincmd w
   endif
 endfunction
 " }}}
@@ -690,7 +724,6 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     " ARG[2]: strip count [optional]
     if len(a:argslist) == 3
       let l:strip_count = eval(a:argslist[2])
-"        PRDebug 'Strip count now ' . l:strip_count
     endif
   " ----------------------------- diff -------------------------------------
   elseif s:reviewmode == 'diff'
@@ -701,7 +734,6 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     let l:patch_file_path = a:argslist[0]
     " passed in by default
     let l:strip_count = eval(a:argslist[1])
-"      PRDebug 'Strip count now ' . l:strip_count
   else
     PREcho 'Fatal internal error in patchreview.vim plugin'
   endif " diff
@@ -715,15 +747,34 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   PREcho '------------------'
   if exists('l:strip_count')
     let l:defsc = l:strip_count
-  elseif s:reviewmode !~ 'patch'
+  elseif s:reviewmode =~ 'patch'
+    let l:defsc = 1
+  else
     PREcho 'Fatal internal error in patchreview.vim plugin'
   endif
-  "Requirements met, now execute
   let l:patch_file_path = fnamemodify(l:patch_file_path, ':p')
   if s:reviewmode =~ 'patch'
     PREcho 'Patch file      : ' . l:patch_file_path
   endif
-  call s:ExtractDiffs(l:patch_file_path)
+  try
+    call s:ExtractDiffs(l:patch_file_path, l:defsc)
+  catch
+    PREcho 'Exception ' . v:exception
+    PREcho 'From ' . v:throwpoint
+    return
+  endtry
+  if s:guess_strip[0] >= s:guess_strip[1]
+    if s:guess_strip[0] >= s:guess_strip[2]
+      let l:strip_count = 0
+    else
+      let l:strip_count = 2
+    endif
+  elseif s:guess_strip[1] >= s:guess_strip[2]
+    let l:strip_count = 1
+  else
+    let l:strip_count = 2
+  endif
+
   let l:this_patch_num = 0
   let l:total_patches = len(g:patches['patch'])
   for patch in g:patches['patch']
@@ -829,24 +880,24 @@ function! <SID>_GenericReview(argslist)                                   "{{{
           let &modeline=s:keep_modeline
         else
           silent! vnew
+          wincmd p
         endif
-      else
-        if ! filereadable(l:inputfile)
-          PREcho 'ERROR: Original file ' . l:inputfile . ' does not exist.'
-          " modelines in loaded files mess with diff comparison
-          let s:keep_modeline=&modeline
-          let &modeline=0
-          silent! exe 'topleft split ' . fnameescape(l:tmp_patch)
-          setlocal noswapfile
-          setlocal syntax=none
-          setlocal buftype=nofile
-          setlocal bufhidden=delete
-          setlocal nobuflisted
-          setlocal modifiable
-          setlocal nowrap
-          silent! 0f
-          let &modeline=s:keep_modeline
-        endif
+      endif
+      if ! filereadable(l:inputfile)
+        PREcho 'ERROR: Original file ' . l:inputfile . ' does not exist.'
+        " modelines in loaded files mess with diff comparison
+        let s:keep_modeline=&modeline
+        let &modeline=0
+        silent! exe 'topleft split ' . fnameescape(l:tmp_patch)
+        setlocal noswapfile
+        setlocal syntax=none
+        setlocal buftype=nofile
+        setlocal bufhidden=delete
+        setlocal nobuflisted
+        setlocal modifiable
+        setlocal nowrap
+        silent! 0f
+        let &modeline=s:keep_modeline
         wincmd p
         let &modeline=s:keep_modeline
       endif
@@ -884,7 +935,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
 endfunction
 "}}}
 
-function! patchreviewlib#DiffReview(...)                                            "{{{
+function! patchreviewlib#DiffReview(...)                                   "{{{
   if exists('g:patchreview_prefunc')
     call call(g:patchreview_prefunc, ['Diff Review'])
   endif

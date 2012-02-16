@@ -11,6 +11,7 @@
 "
 "   0.4 - Added wiggle support
 "       - Added ReversePatchReview command
+"       - Added automatic strip count guessing support
 "       - Handle paths with special characters in them
 "       - Remove patchutils use completely as we can do more with the pure
 "         vim version
