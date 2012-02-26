@@ -1070,9 +1070,7 @@ function! patchreview#DiffReview(...) " {{{
       call s:init_diff_modules()
       let l:diff = {}
       for module in keys(s:modules)
-        call s:me.Echo('Trying ' . module)
         if s:modules[module].Detect()
-          call s:me.Echo('Detected ' . module)
           let l:diff = s:modules[module].GetDiff()
           break
         endif
