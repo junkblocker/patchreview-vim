@@ -42,6 +42,8 @@ running their diff command.
 
 PatchReview Options                                     *patchreview-options*
 
+                                                        *g:patchreview_patch*
+                                                          *patchreview_patch*
   g:patchreview_patch = {string}
       Optional path to patch binary. |PatchReview| tries to locate patch on
       system path automatically. If the binary is not on system path, this
@@ -55,6 +57,20 @@ PatchReview Options                                     *patchreview-options*
         (On *nix systems) >
            let g:patchreview_patch = '/usr/bin/gpatch'
 <
+
+                                              *g:patchreview_patch_needs_crls*
+                                                *patchreview_patch_needs_crlf*
+  g:patchreview_patch_needs_crlf = {1}
+      Optional flag to deal with patch command requiring DOS line endings in
+      patch files and diffs to work. Useful on Windows with UnxUtils patch.exe.
+
+    examples:
+        (On Windows with Cygwin) >
+           let g:patchreview_patch_needs_crlf = 1
+<
+
+                                                        *g:patchreview_wiggle*
+                                                          *patchreview_wiggle*
   g:patchreview_wiggle = {string}
       Optional path to the wiggle ( http://linux.die.net/man/1/wiggle )
       utility. If specified, |PatchReview| and |ReversePatchReview| commands
@@ -73,7 +89,7 @@ PatchReview Options                                     *patchreview-options*
 PatchReview Usage                      *patchreview-usage* *diffreview-usage*
                                                                 *:DiffReview*
 
-  :DiffReview [optional_strip_count] [optional_diff_generation_command]
+  :DiffReview [[optional_strip_count] optional_diff_generation_command]
 
     Perform a diff review in the current directory under version control.
     Currently supports Mercurial (hg), Subversion (svn), CVS, Bazaar (bzr),
@@ -95,7 +111,7 @@ PatchReview Usage                      *patchreview-usage* *diffreview-usage*
 
                                                                 *:PatchReview*
 
-  :PatchReview patchfile_path [optional_source_directory]
+  :PatchReview patchfile_path [optional_source_directory [optional_strip_count]]
 
     Perform a patch review in the current directory based on the supplied
     patchfile_path. If optional_source_directory is specified, patchreview is
@@ -105,7 +121,7 @@ PatchReview Usage                      *patchreview-usage* *diffreview-usage*
 
                                                          *:ReversePatchReview*
 
-  :ReversePatchReview patchfile_path [optional_source_directory]
+  :ReversePatchReview patchfile_path [optional_source_directory [optional_strip_count]]
 
     Perform a reverse patch review of an already applied patch in the current
     directory based on the supplied patchfile_path.  If

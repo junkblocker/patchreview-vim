@@ -59,9 +59,10 @@
 " unlet! g:patchreview_patch
 " let g:patchreview_patch = 'patch'
 
-if &cp
+if &cp || (! exists('g:patchreview_debug') && exists('g:loaded_patchreview'))
   finish
 endif
+let g:loaded_patchreview="1.0"
 if v:version < 700
   echomsg 'patchreview: You need at least Vim 7.0'
   finish
@@ -75,12 +76,12 @@ endif
 " End user commands                                                         "{{{
 "============================================================================
 " :PatchReview
-command! -nargs=* -complete=file PatchReview        unlet! g:patchreview_persist | call patchreview#PatchReview (<f-args>)
-command! -nargs=* -complete=file PatchReviewPersist let g:patchreview_persist=1  | call patchreview#PatchReview (<f-args>)
+command! -nargs=+ -complete=file PatchReview        unlet! g:patchreview_persist | call patchreview#PatchReview (<f-args>)
+command! -nargs=+ -complete=file PatchReviewPersist let g:patchreview_persist=1  | call patchreview#PatchReview (<f-args>)
 
 " :ReversePatchReview
-command! -nargs=* -complete=file ReversePatchReview        unlet! g:patchreview_persist | call patchreview#ReversePatchReview (<f-args>)
-command! -nargs=* -complete=file ReversePatchReviewPersist let g:patchreview_persist=1  | call patchreview#ReversePatchReview (<f-args>)
+command! -nargs=+ -complete=file ReversePatchReview        unlet! g:patchreview_persist | call patchreview#ReversePatchReview (<f-args>)
+command! -nargs=+ -complete=file ReversePatchReviewPersist let g:patchreview_persist=1  | call patchreview#ReversePatchReview (<f-args>)
 
 " :DiffReview
 command! -nargs=* -complete=file DiffReview        unlet! g:patchreview_persist | call patchreview#DiffReview(<f-args>)
