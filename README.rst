@@ -2,6 +2,9 @@
 patchreview.vim
 ===============
 
+Introduction
+============
+
 The Patch Review plugin allows easy single or multipatch code or diff reviews.
 
 It opens each affected (modified/added/deleted) file in the patch or in a
@@ -54,6 +57,7 @@ REQUIREMENTS
 
    in your .vimrc file.
 
+
 INSTALLING
 ==========
 
@@ -74,20 +78,38 @@ hand::
 
      :helptags $HOME/.vim/doc
 
-  or::
+   or::
 
      :helptags $VIM\vimfiles\doc
 
-  etc.
+   etc.
+
 
 USAGE
 =====
+
+Reviewing current changes in your workspace::
+
+      :DiffReview
+
+Reviewing staged git changes::
+
+      :DiffReview git staged --no-color -U5
+
+Reviewing a patch::
+
+      :PatchReview some.patch
+
+Reviewing a previously applied patch (AKA reverse patch review)::
+
+      :ReversePatchReview some.patch
 
 See::
 
       :h patchreview
 
-for usage.
+for usage details.
+
 
 Fork me
 =======

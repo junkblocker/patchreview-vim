@@ -11,11 +11,11 @@ CONTENTS                    *patchreview* *diffreview* *patchreview-contents*
 
   1. Contents.........................................: |patchreview-contents|
   2. Introduction.....................................: |patchreview-intro|
-  3. PatchReview options..............................: |patchreview-options|
-  4. PatchReview Usage................................: |patchreview-usage|
+  3. PatchReview Usage................................: |patchreview-usage|
      4.1 DiffReview Usage.............................: |:DiffReview|
      4.2 PatchReview Usage............................: |:PatchReview|
      4.3 ReversePatchReview Usage.....................: |:ReversePatchReview|
+  4. PatchReview options..............................: |patchreview-options|
   5. Hooks............................................: |patchreview-hooks|
   6. Adding new version control plugins...............: |patchreview-plugins|
 
@@ -40,52 +40,6 @@ pollution.
 It does automatic diff generation for various version control systems by
 running their diff command.
 
-=============================================================================
-
-PatchReview Options                                     *patchreview-options*
-
-                                                        *g:patchreview_patch*
-                                                          *patchreview_patch*
-  g:patchreview_patch = {string}
-      Optional path to patch binary. |PatchReview| tries to locate patch on
-      system path automatically. If the binary is not on system path, this
-      option tell |PatchReview| the full path to the binary.  This option, if
-      specified, overrides the default patch binary on the path.
-
-    Examples:
-        (On Windows with Cygwin) >
-           let g:patchreview_patch = 'c:\\cygwin\\bin\\patch.exe'
-<
-        (On *nix systems) >
-           let g:patchreview_patch = '/usr/bin/gpatch'
-<
-
-                                              *g:patchreview_patch_needs_crlf*
-                                                *patchreview_patch_needs_crlf*
-  g:patchreview_patch_needs_crlf = {1}
-      Optional flag to deal with patch command requiring DOS line endings in
-      patch files and diffs to work. Useful on Windows with UnxUtils patch.exe.
-
-    Example:
-        (On Windows with Cygwin) >
-           let g:patchreview_patch_needs_crlf = 1
-<
-
-                                                        *g:patchreview_wiggle*
-                                                          *patchreview_wiggle*
-  g:patchreview_wiggle = {string}
-      Optional path to the wiggle ( http://linux.die.net/man/1/wiggle )
-      utility. If specified, |PatchReview| and |ReversePatchReview| commands
-      use it to create an addition diff when a review fails with some
-      conflicts/rejections.
-
-    Examples:
-        (On Windows with Cygwin) >
-           let g:patchreview_patch = 'c:\\cygwin\\bin\\patch.exe'
-<
-        (On *nix systems) >
-           let g:patchreview_patch = '/usr/bin/gpatch'
-<
 =============================================================================
 
 PatchReview Usage                      *patchreview-usage* *diffreview-usage*
@@ -133,6 +87,52 @@ PatchReview Usage                      *patchreview-usage* *diffreview-usage*
     Note Only context or unified diff format patches are supported.
 
 
+=============================================================================
+
+PatchReview Options                                     *patchreview-options*
+
+                                                        *g:patchreview_patch*
+                                                          *patchreview_patch*
+  g:patchreview_patch = {string}
+      Optional path to patch binary. |PatchReview| tries to locate patch on
+      system path automatically. If the binary is not on system path, this
+      option tell |PatchReview| the full path to the binary.  This option, if
+      specified, overrides the default patch binary on the path.
+
+    Examples:
+        (On Windows with Cygwin) >
+           let g:patchreview_patch = 'c:\\cygwin\\bin\\patch.exe'
+<
+        (On *nix systems) >
+           let g:patchreview_patch = '/usr/bin/gpatch'
+<
+
+                                              *g:patchreview_patch_needs_crlf*
+                                                *patchreview_patch_needs_crlf*
+  g:patchreview_patch_needs_crlf = {1}
+      Optional flag to deal with patch command requiring DOS line endings in
+      patch files and diffs to work. Useful on Windows with UnxUtils patch.exe.
+
+    Example:
+        (On Windows with Cygwin) >
+           let g:patchreview_patch_needs_crlf = 1
+<
+
+                                                        *g:patchreview_wiggle*
+                                                          *patchreview_wiggle*
+  g:patchreview_wiggle = {string}
+      Optional path to the wiggle ( http://linux.die.net/man/1/wiggle )
+      utility. If specified, |PatchReview| and |ReversePatchReview| commands
+      use it to create an addition diff when a review fails with some
+      conflicts/rejections.
+
+    Examples:
+        (On Windows with Cygwin) >
+           let g:patchreview_patch = 'c:\\cygwin\\bin\\patch.exe'
+<
+        (On *nix systems) >
+           let g:patchreview_patch = '/usr/bin/gpatch'
+<
 Hooks                                                       *patchreview-hooks*
 
   g:patchreview_prefunc = '{function}'
