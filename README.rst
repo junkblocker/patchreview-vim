@@ -24,26 +24,26 @@ bazaar, hg, bzr, cvs, monotone, mtn, git, perforce)
 QUICK INSTALL
 =============
 
-   Unzip the files in your $HOME/.vim (or usually $HOME/vimfiles on Windows)
-   directory.
+Unzip the files in your $HOME/.vim (or usually $HOME/vimfiles on Windows)
+directory.
 
-   Or if installing from extracted form
+Or if installing from extracted form
 
-   1. Copy the directories to your ~/.vim/ directory::
+1. Copy the directories to your ~/.vim/ directory::
 
-      % cp -r autoload doc plugin ~/.vim/
+   % cp -r autoload doc plugin ~/.vim/
 
-   2. Open Vim and do::
+2. Open Vim and do::
 
-      :helptags ~/.vim/doc
+   :helptags ~/.vim/doc
 
 
 REQUIREMENTS
 ============
 
-#. Vim 7.0 or higher built with +diff option.
+1. Vim 7.0 or higher built with +diff option.
 
-#. A gnu compatible patch command installed. This is the standard patch command
+2. A gnu compatible patch command installed. This is the standard patch command
    on any Linux, Mac OS X, \*BSD, Cygwin or /usr/bin/gpatch on newer
    Solaris/OpenSolairs.
 
@@ -57,28 +57,28 @@ REQUIREMENTS
 INSTALLING
 ==========
 
-  1) Extract the zip in your ``$HOME/.vim`` or ``$VIM/vimfiles`` directory and
-     restart vim. The  directory location relevant to your platform can be seen
-     by running::
+1) Extract the zip in your ``$HOME/.vim`` or ``$VIM/vimfiles`` directory and
+   restart vim. The  directory location relevant to your platform can be seen
+   by running::
 
-         :help add-global-plugin
+      :help add-global-plugin
 
-   in vim.
+in vim.
 
-   Alternatively, if installing from extracted form, copy the directories by
-   hand::
+Alternatively, if installing from extracted form, copy the directories by
+hand::
 
-         % cp -r autoload doc plugin ~/.vim/
+      % cp -r autoload doc plugin ~/.vim/
 
-  2) Generate help tags to use help::
+2) Generate help tags to use help::
 
-        :helptags $HOME/.vim/doc
+     :helptags $HOME/.vim/doc
 
-     or::
+  or::
 
-        :helptags $VIM\vimfiles\doc
+     :helptags $VIM\vimfiles\doc
 
-     etc.
+  etc.
 
 USAGE
 =====
