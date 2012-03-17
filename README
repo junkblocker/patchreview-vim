@@ -1,8 +1,0 @@
-1) Copy the directories to your ~/.vim/ directory.
-
-   % cp -r autoload doc plugin ~/.vim/
-
-2) Open vim and do
-
-   :cd ~/.vim/doc
-   :helptags .

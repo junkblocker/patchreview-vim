@@ -3,7 +3,7 @@ let s:perforce = {}
 
 function! s:perforce.Detect() " {{{
   try
-    let l:lines = split(system('p4 set'), "[\n\r]")
+    let l:lines = split(system('p4 set'), '[\n\r]')
     let l:count = len(l:lines)
     let l:idx = 0
     let l:proofs_required = 2
@@ -26,7 +26,7 @@ endfunction
 function! s:perforce.GetDiff() " {{{
   " Excepted to return an array with diff lines in it
   let l:diff = []
-  let l:lines = split(system('p4 opened'), "[\n\r]")
+  let l:lines = split(system('p4 opened'), '[\n\r]')
   let l:linescount = len(l:lines)
   let l:line_num = 0
   while l:line_num < l:linescount
@@ -34,14 +34,14 @@ function! s:perforce.GetDiff() " {{{
     call s:PRemote.Status('Processing ' . l:line)
     let l:line_num += 1
     let l:fwhere = substitute(l:line, '\#.*', '', '')
-    let l:fwhere = split(system('p4 where ' . shellescape(l:fwhere)), "[\n\r]")[0]
+    let l:fwhere = split(system('p4 where ' . shellescape(l:fwhere)), '[\n\r]')[0]
     let l:fwhere = substitute(l:fwhere, '^.\+ ', '', '')
     let l:fwhere = substitute(l:fwhere, expand(getcwd(), ':p') . '/', '', '')
     if l:line =~ '\(delete \(default \)\?change\) .*\(text\|unicode\|utf16\)'
       call s:PRemote.Status('Fetching original ' . l:fwhere)
       let l:diff += ['--- ' . l:fwhere]
       let l:diff += ['+++ /dev/null']
-      let l:diffl = map(split(system('p4 print -q ' . shellescape(l:fwhere)), "[\n\r]"), '"-" . v:val')
+      let l:diffl = map(split(system('p4 print -q ' . shellescape(l:fwhere)), '[\n\r]'), '"-" . v:val')
       let l:diff += ['@@ -1,' . len(l:diffl) . ' +0,0 @@']
       let l:diff += l:diffl
       unlet! l:diffl
@@ -57,7 +57,7 @@ function! s:perforce.GetDiff() " {{{
       call s:PRemote.Status('Diffing ' . l:fwhere)
       let l:diff += ['--- ' . l:fwhere]
       let l:diff += ['+++ ' . l:fwhere]
-      let l:diffl = split(system('p4 diff -du ' . shellescape(l:fwhere)), "[\n\r]")
+      let l:diffl = split(system('p4 diff -du ' . shellescape(l:fwhere)), '[\n\r]')
       let l:diff += l:diffl[2:]
       unlet! l:diffl
     else

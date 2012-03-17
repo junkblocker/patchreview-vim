@@ -365,7 +365,7 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
         continue
       endif
       " Note - Older Perforce (around 2006) generates incorrect diffs
-      let l:thisp = expand(getcwd(), ':p') . '/'
+      let l:thisp = escape(expand(getcwd(), ':p'), '\') . '/'
       let l:mat = matchlist(l:line, '^====.*\#\(\d\+\).*' . l:thisp . '\(.*\)\s====\( content\)\?\r\?$')
       if ! empty(l:mat) && l:mat[2] != ''
         let l:p_type = '!'
@@ -912,16 +912,18 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       "endif
       if patch.type == '+' && s:reviewmode =~ 'patch'
         let l:inputfile = ''
-        let l:patchcmd = join(map([g:patchreview_patch, '--binary', '-s', '-o',
-              \ l:tmp_patched] + patch_R_options + [l:inputfile],
+        let l:patchcmd = g:patchreview_patch . ' '
+              \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
+              \ + patch_R_options + [l:inputfile],
               \ "shellescape(v:val)"), ' ') . ' < ' . shellescape(l:tmp_patch)
       elseif patch.type == '+' && s:reviewmode == 'diff'
         let l:inputfile = ''
         unlet! l:patchcmd
       else
         let l:inputfile = expand(l:stripped_rel_path, ':p')
-        let l:patchcmd = join(map([g:patchreview_patch, '--binary', '-s', '-o',
-              \ l:tmp_patched] + patch_R_options + [l:inputfile],
+        let l:patchcmd = g:patchreview_patch . ' '
+              \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
+              \ + patch_R_options + [l:inputfile],
               \ "shellescape(v:val)"), ' ') . ' < ' . shellescape(l:tmp_patch)
       endif
       let error = 0
