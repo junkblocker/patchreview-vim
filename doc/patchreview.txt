@@ -1,5 +1,5 @@
 *patchreview.txt* Vim global plugin for doing single, multi-patch or diff code reviews
-                Version  v1.0 (for Vim version 7.0 or higher)
+                    Version 1.0.1 (for Vim version 7.0 or higher)
 
                 Author: Manpreet Singh < junkblocker@yahoo.com >
                    Copyright (C) 2006-2011 by Manpreet Singh

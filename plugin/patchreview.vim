@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 0.4 " {{{
+" Version       : 1.0.1 " {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2012 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -62,7 +62,7 @@
 if &cp || (! exists('g:patchreview_debug') && exists('g:loaded_patchreview'))
   finish
 endif
-let g:loaded_patchreview="1.0"
+let g:loaded_patchreview="1.0.1"
 if v:version < 700
   echomsg 'patchreview: You need at least Vim 7.0'
   finish

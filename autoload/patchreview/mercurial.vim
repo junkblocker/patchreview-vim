@@ -1,3 +1,8 @@
+" Author        : Manpreet Singh < junkblocker@yahoo.com >    " {{{
+" Copyright     : 2006-2012 by Manpreet Singh
+" License       : This file is placed in the public domain.
+"                 No warranties express or implied. Use at your own risk.
+"}}}
 let s:PRemote = {}
 let s:mercurial = {}
 

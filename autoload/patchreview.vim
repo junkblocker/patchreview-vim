@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.0                                                       {{{
+" Version       : 1.0.1                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2012 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -970,11 +970,13 @@ function! <SID>_GenericReview(argslist)                                   "{{{
             silent! 0f
           endif
           let &filetype = l:filetype
+          let &fdm = 'diff'
           wincmd p
           let &modeline=s:keep_modeline
         else
           silent! vnew
           let &filetype = l:filetype
+          let &fdm = 'diff'
           wincmd p
         endif
       endif
