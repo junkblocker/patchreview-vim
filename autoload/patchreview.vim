@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.0.1                                                     {{{
+" Version       : 1.0.2                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2012 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -287,6 +287,9 @@ function! <SID>TempName()
 endfunction
 
 function! <SID>GetPatchFileLines(patchfile)
+  "
+  " Throws: "File " . a:patchfile . " is not readable"
+  "
   let l:patchfile = expand(a:patchfile, ":p")
   if ! filereadable(expand(l:patchfile))
     throw "File " . l:patchfile . " is not readable"
@@ -653,8 +656,12 @@ function! patchreview#PatchReview(...)                                     "{{{
   set shortmess=aW
   call s:WipeMsgBuf()
   let s:reviewmode = 'patch'
-  let l:lines = s:GetPatchFileLines(a:1)
-  call s:_GenericReview([l:lines] + a:000[1:])
+  try
+    let l:lines = s:GetPatchFileLines(a:1)
+    call s:_GenericReview([l:lines] + a:000[1:])
+  catch /.*/
+    call s:me.Echo('ERROR: ' . v:exception)
+  endtry
   let &eadirection = s:eadirection
   let &equalalways = s:equalalways
   let &autowriteall = s:save_awa
@@ -689,8 +696,12 @@ function! patchreview#ReversePatchReview(...)  "{{{
   set shortmess=aW
   call s:WipeMsgBuf()
   let s:reviewmode = 'rpatch'
-  let l:lines = s:GetPatchFileLines(a:1)
-  call s:_GenericReview([l:lines] + a:000[1:])
+  try
+    let l:lines = s:GetPatchFileLines(a:1)
+    call s:_GenericReview([l:lines] + a:000[1:])
+  catch /.*/
+    call s:me.Echo('ERROR: ' . v:exception)
+  endtry
   let &eadirection = s:eadirection
   let &equalalways = s:equalalways
   let &autowriteall = s:save_awa
