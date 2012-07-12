@@ -9,6 +9,11 @@
 "
 " Changelog :
 "
+"   1.0.2 - Fix for system's patch command on BSDs.
+"         - Better exception handling
+"
+"   1.0.1 - Set foldmethod to diff for patched buffers
+"
 "   1.0 - Added Perforce support
 "       - Add support for arbitrary diff generation commands
 "       - Added ability to plug in new version control systems by others
@@ -923,19 +928,41 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       "endif
       if patch.type == '+' && s:reviewmode =~ 'patch'
         let l:inputfile = ''
-        let l:patchcmd = g:patchreview_patch . ' '
-              \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
-              \ + patch_R_options + [l:inputfile],
-              \ "shellescape(v:val)"), ' ') . ' < ' . shellescape(l:tmp_patch)
+        if filereadable('/etc/rc.conf')
+          " BSD patch is not GNU patch but works just fine without the
+          " unavailable --binary option
+          let l:patchcmd = g:patchreview_patch . ' '
+                \ . join(map(['-s', '-o', l:tmp_patched]
+                \ + patch_R_options + [l:inputfile],
+                \ "shellescape(v:val)"), ' ') . ' < '
+                \ . shellescape(l:tmp_patch)
+        else
+          let l:patchcmd = g:patchreview_patch . ' '
+                \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
+                \ + patch_R_options + [l:inputfile],
+                \ "shellescape(v:val)"), ' ') . ' < '
+                \ . shellescape(l:tmp_patch)
+        endif
       elseif patch.type == '+' && s:reviewmode == 'diff'
         let l:inputfile = ''
         unlet! l:patchcmd
       else
         let l:inputfile = expand(l:stripped_rel_path, ':p')
-        let l:patchcmd = g:patchreview_patch . ' '
-              \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
-              \ + patch_R_options + [l:inputfile],
-              \ "shellescape(v:val)"), ' ') . ' < ' . shellescape(l:tmp_patch)
+        if filereadable('/etc/rc.conf')
+          " BSD patch is not GNU patch but works just fine without the
+          " unavailable --binary option
+          let l:patchcmd = g:patchreview_patch . ' '
+                \ . join(map(['-s', '-o', l:tmp_patched]
+                \ + patch_R_options + [l:inputfile],
+                \ "shellescape(v:val)"), ' ') . ' < '
+                \ . shellescape(l:tmp_patch)
+        else
+          let l:patchcmd = g:patchreview_patch . ' '
+                \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
+                \ + patch_R_options + [l:inputfile],
+                \ "shellescape(v:val)"), ' ') . ' < '
+                \ . shellescape(l:tmp_patch)
+        endif
       endif
       let error = 0
       if exists('l:patchcmd')
@@ -1158,4 +1185,4 @@ endfunction
 "}}}
 
 " modeline
-" vim: set et fdl=4 fdm=marker fenc=utf-8 ff=unix ft=vim sts=0 sw=2 ts=2 tw=79 nowrap :
+" vim: set et fdl=4 fdm=marker fenc= ff=unix ft=vim sts=0 sw=2 ts=2 tw=79 nowrap :

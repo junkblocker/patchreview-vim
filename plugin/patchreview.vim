@@ -90,4 +90,4 @@ command! -nargs=* -complete=file DiffReviewPersist let g:patchreview_persist=1  
 
 "}}}
 " modeline
-" vim: set et fdl=1 fdm=marker fenc=latin ff=unix ft=vim sw=2 sts=0 ts=2 tw=78 nowrap :
+" vim: set et fdl=1 fdm=marker fenc= ff=unix ft=vim sw=2 sts=0 ts=2 tw=78 nowrap :
