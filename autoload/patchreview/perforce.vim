@@ -50,7 +50,7 @@ function! s:perforce.GetDiff() " {{{
       let l:diff += ['@@ -1,' . len(l:diffl) . ' +0,0 @@']
       let l:diff += l:diffl
       unlet! l:diffl
-    elseif l:line =~ '\(add \(default \)\?change\) .*\(text\|unicode\|utf16\)'
+    elseif l:line =~ '\(\(add\|branch\) \(default \)\?change\) .*\(text\|unicode\|utf16\)'
       call s:PRemote.Status('Reading ' . l:fwhere)
       let l:diff += ['--- /dev/null']
       let l:diff += ['+++ ' . l:fwhere]

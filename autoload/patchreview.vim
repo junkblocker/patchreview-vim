@@ -1,13 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.0.2                                                     {{{
+" Version       : 1.0.3                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2012 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog :
+"
+"   1.0.3 - Perforce diff was skipping files added via branching
 "
 "   1.0.2 - Fix for system's patch command on BSDs.
 "         - Better exception handling
