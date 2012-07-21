@@ -1,13 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.0.3                                                     {{{
+" Version       : 1.0.4                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2012 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog :
+"
+"   1.0.4 - patchreview was broken in vim 7.2
 "
 "   1.0.3 - Perforce diff was skipping files added via branching
 "
@@ -128,7 +130,11 @@ let s:modules = {}
 " Functions {{{
 
 function! s:me.Status(str)                                                 "{{{
-  let l:wide = min([strlen(a:str), strdisplaywidth(a:str)])
+  if v:version >= 703
+    let l:wide = min([strlen(a:str), strdisplaywidth(a:str)])
+  else
+    let l:wide = min([strlen(a:str), &columns])
+  endif
   echo strpart(a:str, 0, l:wide)
   " call s:me.Debug(strpart(a:str, 0, l:wide))
   sleep 1m
