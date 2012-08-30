@@ -936,7 +936,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       "endif
       if patch.type == '+' && s:reviewmode =~ 'patch'
         let l:inputfile = ''
-        if filereadable('/etc/rc.conf')
+        if filereadable('/sbin/bsdlabel')
           " BSD patch is not GNU patch but works just fine without the
           " unavailable --binary option
           let l:patchcmd = g:patchreview_patch . ' '
@@ -956,7 +956,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         unlet! l:patchcmd
       else
         let l:inputfile = expand(l:stripped_rel_path, ':p')
-        if filereadable('/etc/rc.conf')
+        if filereadable('/sbin/bsdlabel')
           " BSD patch is not GNU patch but works just fine without the
           " unavailable --binary option
           let l:patchcmd = g:patchreview_patch . ' '
