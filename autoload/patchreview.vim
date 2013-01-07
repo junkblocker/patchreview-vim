@@ -1,13 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.0.5                                                     {{{
+" Version       : 1.0.6                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2012 by Manpreet Singh
+" Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog :
+"
+"   1.0.6 - Convert rejects to unified format if possible
 "
 "   1.0.5 - Fixed context format patch handling
 "           minor *BSD detection improvement
@@ -1060,6 +1062,11 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         let s:keep_modeline=&modeline
         let &modeline=0
         silent! exe 'topleft split ' . fnameescape(l:tmp_patched_rej)
+        if getline(1) =~ '\m\*\{15}' && executable('filterdiff')
+          call append(0, '--- ' . l:stripped_rel_path . '.new')
+          call append(0, '*** ' . l:stripped_rel_path . '.old')
+          silent %!filterdiff --format=unified
+        endif
         setlocal noswapfile
         setlocal syntax=none
         setlocal bufhidden=delete
