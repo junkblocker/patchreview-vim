@@ -9,7 +9,7 @@
 "
 " Changelog :
 "
-"   1.0.6 - Convert rejects to unified format if possible
+"   1.0.6 - Convert rejects to unified format if possible unless disabled
 "
 "   1.0.5 - Fixed context format patch handling
 "           minor *BSD detection improvement
@@ -794,6 +794,8 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     return
   endif
 
+  let l:filterdiff_warned = 0
+
   if s:reviewmode == 'diff' || s:reviewmode == 'rpatch'
     let patch_R_options = ['-t', '-R']
   elseif s:reviewmode == 'patch'
@@ -1062,10 +1064,27 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         let s:keep_modeline=&modeline
         let &modeline=0
         silent! exe 'topleft split ' . fnameescape(l:tmp_patched_rej)
-        if getline(1) =~ '\m\*\{15}' && executable('filterdiff')
-          call append(0, '--- ' . l:stripped_rel_path . '.new')
-          call append(0, '*** ' . l:stripped_rel_path . '.old')
-          silent %!filterdiff --format=unified
+        " Try to convert rejects to unified format unless explicitly disabled
+        if (! exists('g:patchreview_unified_rejects') || g:patchreview_unified_rejects == 1) &&
+              \ getline(1) =~ '\m\*\{15}'
+          if executable('filterdiff')
+            call append(0, '--- ' . l:stripped_rel_path . '.new')
+            call append(0, '*** ' . l:stripped_rel_path . '.old')
+            silent %!filterdiff --format=unified
+          elseif ! l:filterdiff_warned
+            if exists('g:patchreview_unified_rejects')
+              call s:me.Echo('WARNING: Option g:patchreview_unified_rejects requires filterdiff')
+              call s:me.Echo('WARNING: installed which I could not locate on the PATH.')
+              call s:me.Echo('WARNING: Please install it via diffutils package for your platform and make')
+              call s:me.Echo('WARNING: sure it is on the PATH.')
+            else
+              call s:me.Echo('WARNING: Converting rejections to unified format requires filterdiff installed')
+              call s:me.Echo('WARNING: which I could not locate on the PATH.')
+              call s:me.Echo('WARNING: Please install it via diffutils package for your platform and make')
+              call s:me.Echo('WARNING: sure it is on the PATH for better readable .rej output.')
+            endif
+            let l:filterdiff_warned = 1
+          endif
         endif
         setlocal noswapfile
         setlocal syntax=none

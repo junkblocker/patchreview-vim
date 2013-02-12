@@ -133,6 +133,22 @@ PatchReview Options                                     *patchreview-options*
         (On *nix systems) >
            let g:patchreview_patch = '/usr/bin/gpatch'
 <
+
+                                               *g:patchreview_unified_rejects*
+                                                 *patchreview_unified_rejects*
+  g:patchreview_unified_rejects = {0|1}
+      Usually, the patch utility generates context format reject files (.rej).
+      These can be a bit hard to read. So, we try to automatically convert
+      these to the unified format. You can set this option to 0 to disable this
+      behavior.
+
+      NOTE: Converting to unified format requires the filterdiff utility
+      installed on the PATH. filterdiff can be installed via the patchutils
+      package for your platform.
+
+    Example:
+        let g:patchreview_unified_rejects = 1
+<
 Hooks                                                       *patchreview-hooks*
 
   g:patchreview_prefunc = '{function}'
