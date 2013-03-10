@@ -1186,7 +1186,7 @@ function! patchreview#DiffReview(...) " {{{
         endif
       endfor
       if !exists("l:diff['diff']") || empty(l:diff['diff'])
-        call s:me.Echo('Please make sure you are in a VCS controlled top directory.')
+        call s:me.Echo('No diff found. Make sure you are in a VCS controlled top directory.')
       else
         let s:reviewmode = 'diff'
         call s:_GenericReview([l:diff['diff'], l:diff['strip']])
