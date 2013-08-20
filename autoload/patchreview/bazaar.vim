@@ -1,24 +1,24 @@
 " Author        : Manpreet Singh < junkblocker@yahoo.com >    " {{{
-" Copyright     : 2006-2012 by Manpreet Singh
+" Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "}}}
-let s:PRemote = {}
+let s:driver = {}
 let s:bazaar = {}
 
-function! s:bazaar.Detect() " {{{
+function! s:bazaar.detect() " {{{
   return isdirectory('.bzr')
 endfunction
 " }}}
 
-function! s:bazaar.GetDiff() " {{{
-  let l:diff = s:PRemote.GenDiff('bzr diff')
+function! s:bazaar.get_diff() " {{{
+  let l:diff = s:driver.generate_diff('bzr diff')
   return {'strip': 0, 'diff': l:diff}
 endfunction
 " }}}
 
 function! patchreview#bazaar#register(remote) "{{{
-  let s:PRemote = a:remote
+  let s:driver = a:remote
   return s:bazaar
 endfunction
 " }}}

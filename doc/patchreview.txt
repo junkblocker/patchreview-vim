@@ -1,9 +1,10 @@
 *patchreview.txt* Vim global plugin for doing single, multi-patch or diff code reviews
-                    Version 1.0.6 (for Vim version 7.0 or higher)
+                    Version 1.0.7 (for Vim version 7.0 or higher)
 
                 Author: Manpreet Singh < junkblocker@yahoo.com >
                    Copyright (C) 2006-2013 by Manpreet Singh
               License : This file is placed in the public domain.
+            No warranties express or implied. Use at your own risk.
 
 =============================================================================
 
@@ -162,7 +163,7 @@ Hooks                                                       *patchreview-hooks*
       function MyNotify(review_type)
           system('say "' . review_type . ' completed"')
       endfunction
-      let g:patchreview_postfun = 'MyNotify'
+      let g:patchreview_postfunc = 'MyNotify'
 <
 
 Adding new version control plugins                         *patchreview-plugins*

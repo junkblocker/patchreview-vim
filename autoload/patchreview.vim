@@ -1,13 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.0.6                                                     {{{
+" Version       : 1.0.7                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
-" Changelog :
+" Changelog : {{{
+"
+"   1.0.7 - Internal code style changes.
 "
 "   1.0.6 - Convert rejects to unified format if possible unless disabled
 "
@@ -64,65 +66,15 @@
 "
 "   0.1 - First released
 "}}}
-
-" TODO {{{
-" 1) git staged support?
-" }}}
-"
-" Documentation:                                                         "{{{
-" ===========================================================================
-" This plugin allows single or multiple, patch or diff based code reviews to
-" be easily done in VIM. VIM has :diffpatch command to do single file reviews
-" but a) can not handle patch files containing multiple patches or b) do
-" automated diff generation for various version control systems. This plugin
-" attempts to provide those functionalities. It opens each changed / added or
-" removed file diff in new tabs.
-"
-" Installing:
-"
-"   For a quick start, unzip patchreview.zip into your ~/.vim directory and
-"   restart Vim.
-"
-" Details:
-"
-"   Requirements:
-"
-"   1) VIM 7.0 or higher built with +diff option.
-"
-"   2) A gnu compatible patch command installed. This is the standard patch
-"      command on Linux, Mac OS X, *BSD, Cygwin or /usr/bin/gpatch on newer
-"      Solaris.
-"
-"   Install:
-"
-"   1) Extract the zip in your $HOME/.vim or $VIM/vimfiles directory and
-"      restart vim. The  directory location relevant to your platform can be
-"      seen by running :help add-global-plugin in vim.
-"
-"   2) Restart vim.
-"
-"  Configuration:
-"
-"  Optionally, specify the locations to the patch command in your .vimrc.
-"
-"      let g:patchreview_patch       = '/path/to/gnu/patch'
-"
-" Usage:
-"
-"  Please see :help patchreview or :help diffreview for details.
-"
-""}}}
-
+"}}}
+" Initialization {{{
 " Enabled only during development
 " unlet! g:loaded_patchreview
 " unlet! g:patchreview_patch
 " let g:patchreview_patch = 'patch'
 
 " load only once
-if &cp
-  finish
-endif
-if v:version < 700
+if &cp || v:version < 700
   finish
 endif
 
@@ -131,31 +83,27 @@ let s:msgbufname = '--PatchReview_Messages--'
 let s:me = {}
 
 let s:modules = {}
-
+" }}}
 " Functions {{{
-
-function! s:me.Status(str)                                                 "{{{
+function! s:me.log(str)                                                 "{{{
   if v:version >= 703
     let l:wide = min([strlen(a:str), strdisplaywidth(a:str)])
   else
     let l:wide = min([strlen(a:str), &columns])
   endif
   echo strpart(a:str, 0, l:wide)
-  " call s:me.Debug(strpart(a:str, 0, l:wide))
+  " call s:me.debug(strpart(a:str, 0, l:wide))
   sleep 1m
   redraw
 endfunction
 " }}}
-
-function! s:me.Debug(str)                                                  "{{{
+function! s:me.debug(str)                                                  "{{{
   if exists('g:patchreview_debug')
-    call s:me.Echo('DEBUG: ' . a:str)
+    call s:me.echo('DEBUG: ' . a:str)
   endif
 endfunction
-command! -nargs=+ -complete=expression PRDebug call s:PRDebug(<args>)
 "}}}
-
-function! <SID>WipeMsgBuf()                                            "{{{
+function! s:wipe_message_buffer()                                            "{{{
   let l:cur_tabnr = tabpagenr()
   let l:cur_winnr = winnr()
   if exists('s:origtabpagenr')
@@ -174,9 +122,8 @@ function! <SID>WipeMsgBuf()                                            "{{{
   endif
 endfunction
 "}}}
-
-function! s:me.Echo(...)                                                   "{{{
-  " Usage: s:me.Echo(msg, [go_back])
+function! s:me.echo(...)                                                   "{{{
+  " Usage: s:me.echo(msg, [go_back])
   "            default go_back = 1
   "
   let l:cur_tabnr = tabpagenr()
@@ -221,28 +168,26 @@ function! s:me.Echo(...)                                                   "{{{
   endif
 endfunction
 "}}}
-
-function! <SID>CheckBinary(BinaryName)                                 "{{{
+function! s:check_binary(BinaryName)                                 "{{{
   " Verify that BinaryName is specified or available
   if ! exists('g:patchreview_' . a:BinaryName)
     if executable(a:BinaryName)
       let g:patchreview_{a:BinaryName} = a:BinaryName
       return 1
     else
-      call s:me.Echo('g:patchreview_' . a:BinaryName . ' is not defined and ' . a:BinaryName . ' command could not be found on path.')
-      call s:me.Echo('Please define it in your .vimrc.')
+      call s:me.echo('g:patchreview_' . a:BinaryName . ' is not defined and ' . a:BinaryName . ' command could not be found on path.')
+      call s:me.echo('Please define it in your .vimrc.')
       return 0
     endif
   elseif ! executable(g:patchreview_{a:BinaryName})
-    call s:me.Echo('Specified g:patchreview_' . a:BinaryName . ' [' . g:patchreview_{a:BinaryName} . '] is not executable.')
+    call s:me.echo('Specified g:patchreview_' . a:BinaryName . ' [' . g:patchreview_{a:BinaryName} . '] is not executable.')
     return 0
   else
     return 1
   endif
 endfunction
 "}}}
-
-function! <SID>GuessStrip(diff_file_path, default_strip) " {{{
+function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
   if stridx(a:diff_file_path, '/') != -1
     let l:splitchar = '/'
   elseif stridx(a:diff_file_path, '\') !=  -1
@@ -256,32 +201,29 @@ function! <SID>GuessStrip(diff_file_path, default_strip) " {{{
     if len(l:path) >= i
       if filereadable(join(['.'] + l:path[i : ], l:splitchar))
         let s:guess_strip[i] += 1
-        " call s:me.Debug("Guessing strip: " . i)
+        " call s:me.debug("Guessing strip: " . i)
         return
       endif
     endif
     let i = i + 1
   endwhile
-  " call s:me.Debug("REALLY Guessing strip: " . a:default_strip)
+  " call s:me.debug("REALLY Guessing strip: " . a:default_strip)
   let s:guess_strip[a:default_strip] += 1
 endfunction
 " }}}
-
-function! <SID>PRState(...)  " For easy manipulation of diff parsing state "{{{
+function! s:state(...)  " For easy manipulation of diff parsing state "{{{
   if a:0 != 0
-    let s:STATE = a:1
-    " call s:me.Debug('Set STATE: ' . a:1)
+    let s:PARSE_STATE = a:1
+    " call s:me.debug('Set PARSE_STATE: ' . a:1)
   else
-    if ! exists('s:STATE')
-      let s:STATE = 'START'
+    if ! exists('s:PARSE_STATE')
+      let s:PARSE_STATE = 'START'
     endif
-    return s:STATE
+    return s:PARSE_STATE
   endif
 endfunction
-command! -nargs=* PRState call s:PRState(<args>)
 "}}}
-
-function! <SID>TempName()
+function! s:temp_name()                                                  "{{{
   " Create diffs in a way which lets session save/restore work better
   if ! exists('g:patchreview_persist')
     return tempname()
@@ -303,8 +245,8 @@ function! <SID>TempName()
   endwhile
   return l:temp_file_name
 endfunction
-
-function! <SID>GetPatchFileLines(patchfile)
+" }}}
+function! s:get_patchfile_lines(patchfile)                                  " {{{
   "
   " Throws: "File " . a:patchfile . " is not readable"
   "
@@ -315,25 +257,25 @@ function! <SID>GetPatchFileLines(patchfile)
   endif
   return readfile(l:patchfile, 'b')
 endfunction
-
-function! s:me.GenDiff(shell_escaped_cmd)
+" }}}
+function! s:me.generate_diff(shell_escaped_cmd)                            "{{{
   let l:diff = []
   let v:errmsg = ''
   let l:cout = system(a:shell_escaped_cmd)
   if v:errmsg != '' || v:shell_error
-    call s:me.Echo(v:errmsg)
-    call s:me.Echo('Could not execute [' . a:shell_escaped_cmd . ']')
+    call s:me.echo(v:errmsg)
+    call s:me.echo('Could not execute [' . a:shell_escaped_cmd . ']')
     if v:shell_error
-      call s:me.Echo('Error code: ' . v:shell_error)
+      call s:me.echo('Error code: ' . v:shell_error)
     endif
-    call s:me.Echo(l:cout)
+    call s:me.echo(l:cout)
   else
     let l:diff = split(l:cout, '[\n\r]')
   endif
   return l:diff
 endfunction
-
-function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
+" }}}
+function! s:extract_diffs(lines, default_strip_count)                       "{{{
   " Sets g:patches = {'fail':'', 'patch':[
   " {
   "  'filename': filepath
@@ -360,29 +302,29 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
   let l:collect = []
   let l:line_num = 0
   let l:linescount = len(a:lines)
-  PRState 'START'
+  call s:state('START')
   while l:line_num < l:linescount
     let l:line = a:lines[l:line_num]
-    " call s:me.Debug(l:line)
+    " call s:me.debug(l:line)
     let l:line_num += 1
-    if s:PRState() == 'START' " {{{
+    if s:state() == 'START' " {{{
       let l:mat = matchlist(l:line, '^--- \([^\t]\+\).*$')
       if ! empty(l:mat) && l:mat[1] != ''
-        PRState 'MAYBE_UNIFIED_DIFF'
+        call s:state('MAYBE_UNIFIED_DIFF')
         let l:p_first_file = l:mat[1]
         let l:collect = [l:line]
         continue
       endif
       let l:mat = matchlist(l:line, '^\*\*\* \([^\t]\+\).*$')
       if ! empty(l:mat) && l:mat[1] != ''
-        PRState 'MAYBE_CONTEXT_DIFF'
+        call s:state('MAYBE_CONTEXT_DIFF')
         let l:p_first_file = l:mat[1]
         let l:collect = [l:line]
         continue
       endif
       let l:mat = matchlist(l:line, '^\(Binary files\|Files\) \(.\+\) and \(.+\) differ$')
       if ! empty(l:mat) && l:mat[2] != '' && l:mat[3] != ''
-        call s:me.Echo('Ignoring ' . tolower(l:mat[1]) . ' ' . l:mat[2] . ' and ' . l:mat[3])
+        call s:me.echo('Ignoring ' . tolower(l:mat[1]) . ' ' . l:mat[2] . ' and ' . l:mat[3])
         continue
       endif
       " Note - Older Perforce (around 2006) generates incorrect diffs
@@ -391,17 +333,17 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
       if ! empty(l:mat) && l:mat[2] != ''
         let l:p_type = '!'
         let l:filepath = l:mat[2]
-        call s:me.Status('Collecting ' . l:filepath)
+        call s:me.log('Collecting ' . l:filepath)
         let l:collect = ['--- ' . l:filepath . ' (revision ' . l:mat[1] . ')', '+++ ' .  l:filepath . ' (working copy)']
-        PRState 'EXPECT_UNIFIED_RANGE_CHUNK'
+        call s:state('EXPECT_UNIFIED_RANGE_CHUNK')
         continue
       endif
       continue
       " }}}
-    elseif s:PRState() == 'MAYBE_CONTEXT_DIFF' " {{{
+    elseif s:state() == 'MAYBE_CONTEXT_DIFF' " {{{
       let l:mat = matchlist(l:line, '^--- \([^\t]\+\).*$')
       if empty(l:mat) || l:mat[1] == ''
-        PRState 'START'
+        call s:state('START')
         let l:line_num -= 1
         continue
       endif
@@ -426,23 +368,23 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
           endif
         endif
       endif
-      call s:me.Status('Collecting ' . l:filepath)
+      call s:me.log('Collecting ' . l:filepath)
       PRState 'EXPECT_15_STARS'
       let l:collect += [l:line]
       " }}}
-    elseif s:PRState() == 'EXPECT_15_STARS' " {{{
+    elseif s:state() == 'EXPECT_15_STARS' " {{{
       if l:line !~ '^*\{15}$'
-        PRState 'START'
+        call s:state('START')
         let l:line_num -= 1
         continue
       endif
       PRState 'EXPECT_CONTEXT_CHUNK_HEADER_1'
       let l:collect += [l:line]
       " }}}
-    elseif s:PRState() == 'EXPECT_CONTEXT_CHUNK_HEADER_1' " {{{
+    elseif s:state() == 'EXPECT_CONTEXT_CHUNK_HEADER_1' " {{{
       let l:mat = matchlist(l:line, '^\*\*\* \(\d\+,\)\?\(\d\+\) \*\*\*\*$')
       if empty(l:mat) || l:mat[1] == ''
-        PRState 'START'
+        call s:state('START')
         let l:line_num -= 1
         continue
       endif
@@ -450,28 +392,28 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
       PRState 'READ_TILL_CONTEXT_FRAGMENT_2'
       continue
       " }}}
-    elseif s:PRState() == 'READ_TILL_CONTEXT_FRAGMENT_2' " {{{
+    elseif s:state() == 'READ_TILL_CONTEXT_FRAGMENT_2' " {{{
       if l:line !~ '^[ !+-] .*$'
         let l:mat = matchlist(l:line, '^--- \(\d\+\),\(\d\+\) ----$')
         if ! empty(l:mat) && l:mat[1] != '' && l:mat[2] != ''
           let goal_count = l:mat[2] - l:mat[1] + 1
           let c_count = 0
-          PRState 'READ_CONTEXT_CHUNK'
+          call s:state('READ_CONTEXT_CHUNK')
           let l:collect += [l:line]
           continue
         endif
-        PRState 'START'
+        call s:state('START')
         let l:line_num -= 1
         continue
       endif
       let l:collect += [l:line]
       continue
       " }}}
-    elseif s:PRState() == 'READ_CONTEXT_CHUNK' " {{{
+    elseif s:state() == 'READ_CONTEXT_CHUNK' " {{{
       let c_count += 1
       if c_count == goal_count
         let l:collect += [l:line]
-        PRState 'BACKSLASH_OR_CRANGE_EOF'
+        call s:state('BACKSLASH_OR_CRANGE_EOF')
         continue
       else " goal not met yet
         let l:mat = matchlist(l:line, '^\([\\!+ -]\) .*$')
@@ -482,7 +424,7 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
             continue
           else
             let l:line_num -= 1
-            PRState 'START'
+            call s:state('START')
             continue
           endif
         endif
@@ -490,7 +432,7 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
         continue
       endif
       " }}}
-    elseif s:PRState() == 'BACKSLASH_OR_CRANGE_EOF' " {{{
+    elseif s:state() == 'BACKSLASH_OR_CRANGE_EOF' " {{{
       if l:line =~ '^\\ No newline.*$'   " XXX: Can we go to another chunk from here??
         let l:collect += [l:line]
         let l:this_patch = {}
@@ -499,11 +441,11 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
         let l:this_patch['content'] = l:collect
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
-        call s:me.Status('Collected  ' . l:filepath)
+        call s:me.log('Collected  ' . l:filepath)
         if l:p_type == '!'
-          call s:GuessStrip(l:filepath, a:default_strip_count)
+          call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
         endif
-        PRState 'START'
+        call s:state('START')
         continue
       endif
       if l:line =~ '^\*\{15}$'
@@ -515,17 +457,17 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
       let g:patches['patch'] += [l:this_patch]
       unlet! l:this_patch
       let l:line_num -= 1
-      call s:me.Status('Collected  ' . l:filepath)
+      call s:me.log('Collected  ' . l:filepath)
       if l:p_type == '!'
-        call s:GuessStrip(l:filepath, a:default_strip_count)
+        call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
       endif
-      PRState 'START'
+      call s:state('START')
       continue
       " }}}
-    elseif s:PRState() == 'MAYBE_UNIFIED_DIFF' " {{{
+    elseif s:state() == 'MAYBE_UNIFIED_DIFF' " {{{
       let l:mat = matchlist(l:line, '^+++ \([^\t]\+\).*$')
       if empty(l:mat) || l:mat[1] == ''
-        PRState 'START'
+        call s:state('START')
         let l:line_num -= 1
         continue
       endif
@@ -550,45 +492,45 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
           endif
         endif
       endif
-      call s:me.Status('Collecting ' . l:filepath)
-      PRState 'EXPECT_UNIFIED_RANGE_CHUNK'
+      call s:me.log('Collecting ' . l:filepath)
+      call s:state('EXPECT_UNIFIED_RANGE_CHUNK')
       let l:collect += [l:line]
       continue
       " }}}
-    elseif s:PRState() == 'EXPECT_UNIFIED_RANGE_CHUNK' "{{{
+    elseif s:state() == 'EXPECT_UNIFIED_RANGE_CHUNK' "{{{
       let l:mat = matchlist(l:line, '^@@ -\(\d\+,\)\?\(\d\+\) +\(\d\+,\)\?\(\d\+\) @@.*$')
       if ! empty(l:mat)
         let l:old_goal_count = l:mat[2]
         let l:new_goal_count = l:mat[4]
         let l:o_count = 0
         let l:n_count = 0
-        PRState 'READ_UNIFIED_CHUNK'
+        call s:state('READ_UNIFIED_CHUNK')
         let l:collect += [l:line]
       else
         let l:this_patch = {'filename': l:filepath, 'type': l:p_type, 'content': l:collect}
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
-        call s:me.Status('Collected  ' . l:filepath)
+        call s:me.log('Collected  ' . l:filepath)
         if l:p_type == '!'
-          call s:GuessStrip(l:filepath, a:default_strip_count)
+          call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
         endif
-        PRState 'START'
+        call s:state('START')
         let l:line_num -= 1
       endif
       continue
       "}}}
-    elseif s:PRState() == 'READ_UNIFIED_CHUNK' " {{{
+    elseif s:state() == 'READ_UNIFIED_CHUNK' " {{{
       if l:o_count == l:old_goal_count && l:n_count == l:new_goal_count
         if l:line =~ '^\\.*$'   " XXX: Can we go to another chunk from here??
           let l:collect += [l:line]
           let l:this_patch = {'filename': l:filepath, 'type': l:p_type, 'content': l:collect}
           let g:patches['patch'] += [l:this_patch]
           unlet! l:this_patch
-          call s:me.Status('Collected  ' . l:filepath)
+          call s:me.log('Collected  ' . l:filepath)
           if l:p_type == '!'
-            call s:GuessStrip(l:filepath, a:default_strip_count)
+            call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
           endif
-          PRState 'START'
+          call s:state('START')
           continue
         endif
         let l:mat = matchlist(l:line, '^@@ -\(\d\+,\)\?\(\d\+\) +\(\d\+,\)\?\(\d\+\) @@.*$')
@@ -603,18 +545,18 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
         let l:this_patch = {'filename': l:filepath, 'type': l:p_type, 'content': l:collect}
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
-        call s:me.Status('Collected  ' . l:filepath)
+        call s:me.log('Collected  ' . l:filepath)
         if l:p_type == '!'
-          call s:GuessStrip(l:filepath, a:default_strip_count)
+          call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
         endif
         let l:line_num -= 1
-        PRState 'START'
+        call s:state('START')
         continue
       else " goal not met yet
         let l:mat = matchlist(l:line, '^\([\\+ -]\).*$')
         if empty(l:mat) || l:mat[1] == ''
           let l:line_num -= 1
-          PRState 'START'
+          call s:state('START')
           continue
         endif
         let chr = l:mat[1]
@@ -635,12 +577,12 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
       return
     endif " }}}
   endwhile
-  "call s:me.Echo(s:PRState())
+  "call s:me.echo(s:state())
   if (
-        \ (s:PRState() == 'READ_CONTEXT_CHUNK'
+        \ (s:state() == 'READ_CONTEXT_CHUNK'
         \  && c_count == goal_count
         \ ) ||
-        \ (s:PRState() == 'READ_UNIFIED_CHUNK'
+        \ (s:state() == 'READ_UNIFIED_CHUNK'
         \  && l:n_count == l:new_goal_count
         \  && l:o_count == l:old_goal_count
         \ )
@@ -649,16 +591,15 @@ function! <SID>ExtractDiffs(lines, default_strip_count)               "{{{
     let g:patches['patch'] += [l:this_patch]
     unlet! l:this_patch
     unlet! lines
-    call s:me.Status('Collected  ' . l:filepath)
+    call s:me.log('Collected  ' . l:filepath)
     if l:p_type == '!' || (l:p_type == '+' && s:reviewmode == 'diff')
-      call s:GuessStrip(l:filepath, a:default_strip_count)
+      call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
     endif
   endif
   return
 endfunction
 "}}}
-
-function! patchreview#PatchReview(...)                                     "{{{
+function! patchreview#patchreview(...)                                     "{{{
   if exists('g:patchreview_prefunc')
     call call(g:patchreview_prefunc, ['Patch Review'])
   endif
@@ -678,13 +619,13 @@ function! patchreview#PatchReview(...)                                     "{{{
   set equalalways
   set eadirection=hor
   set shortmess=aW
-  call s:WipeMsgBuf()
+  call s:wipe_message_buffer()
   let s:reviewmode = 'patch'
   try
-    let l:lines = s:GetPatchFileLines(a:1)
-    call s:_GenericReview([l:lines] + a:000[1:])
+    let l:lines = s:get_patchfile_lines(a:1)
+    call s:generic_review([l:lines] + a:000[1:])
   catch /.*/
-    call s:me.Echo('ERROR: ' . v:exception)
+    call s:me.echo('ERROR: ' . v:exception)
   endtry
   let &eadirection = s:eadirection
   let &equalalways = s:equalalways
@@ -697,8 +638,7 @@ function! patchreview#PatchReview(...)                                     "{{{
   endif
 endfunction
 "}}}
-
-function! patchreview#ReversePatchReview(...)  "{{{
+function! patchreview#reverse_patchreview(...)  "{{{
   if exists('g:patchreview_prefunc')
     call call(g:patchreview_prefunc, ['Reverse Patch Review'])
   endif
@@ -718,13 +658,13 @@ function! patchreview#ReversePatchReview(...)  "{{{
   set equalalways
   set eadirection=hor
   set shortmess=aW
-  call s:WipeMsgBuf()
+  call s:wipe_message_buffer()
   let s:reviewmode = 'rpatch'
   try
-    let l:lines = s:GetPatchFileLines(a:1)
-    call s:_GenericReview([l:lines] + a:000[1:])
+    let l:lines = s:get_patchfile_lines(a:1)
+    call s:generic_review([l:lines] + a:000[1:])
   catch /.*/
-    call s:me.Echo('ERROR: ' . v:exception)
+    call s:me.echo('ERROR: ' . v:exception)
   endtry
   let &eadirection = s:eadirection
   let &equalalways = s:equalalways
@@ -737,18 +677,17 @@ function! patchreview#ReversePatchReview(...)  "{{{
   endif
 endfunction
 "}}}
-
-function! <SID>Wiggle(out, rej) " {{{
+function! s:wiggle(out, rej) " {{{
   if ! executable('wiggle')
     return
   endif
-  let l:wiggle_out = s:TempName()
+  let l:wiggle_out = s:temp_name()
   let v:errmsg = ''
   let l:cout = system('wiggle --merge ' . shellescape(a:out) . ' ' . shellescape(a:rej) . ' > ' . shellescape(l:wiggle_out))
   if v:errmsg != '' || v:shell_error
-    call s:me.Echo('ERROR: Wiggle was not completely successful.')
+    call s:me.echo('ERROR: wiggle was not completely successful.')
     if v:errmsg != ''
-      call s:me.Echo('ERROR: ' . v:errmsg)
+      call s:me.echo('ERROR: ' . v:errmsg)
     endif
   endif
   if filereadable(l:wiggle_out)
@@ -772,8 +711,7 @@ function! <SID>Wiggle(out, rej) " {{{
   endif
 endfunction
 " }}}
-
-function! <SID>_GenericReview(argslist)                                   "{{{
+function! s:generic_review(argslist)                                   "{{{
   " diff mode:
   "   arg1 = patchlines
   "   arg2 = strip count
@@ -784,13 +722,13 @@ function! <SID>_GenericReview(argslist)                                   "{{{
 
   " VIM 7+ required
   if version < 700
-    call s:me.Echo('This plugin needs VIM 7 or higher')
+    call s:me.echo('This plugin needs VIM 7 or higher')
     return
   endif
 
   " +diff required
   if ! has('diff')
-    call s:me.Echo('This plugin needs VIM built with +diff feature.')
+    call s:me.echo('This plugin needs VIM built with +diff feature.')
     return
   endif
 
@@ -801,7 +739,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   elseif s:reviewmode == 'patch'
     let patch_R_options = []
   else
-    call s:me.Echo('Fatal internal error in patchreview.vim plugin')
+    call s:me.echo('Fatal internal error in patchreview.vim plugin')
     return
   endif
 
@@ -810,11 +748,11 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     let l:argc = len(a:argslist)
     if l:argc == 0 || l:argc > 3
       if s:reviewmode == 'patch'
-        call s:me.Echo('PatchReview command needs 1 to 3 arguments.')
+        call s:me.echo('PatchReview command needs 1 to 3 arguments.')
         return
       endif
       if s:reviewmode == 'rpatch'
-        call s:me.Echo('ReversePatchReview command needs 1 to 3 arguments.')
+        call s:me.echo('ReversePatchReview command needs 1 to 3 arguments.')
         return
       endif
     endif
@@ -824,13 +762,13 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     if len(a:argslist) >= 2
       let s:src_dir = expand(a:argslist[1], ':p')
       if ! isdirectory(s:src_dir)
-        call s:me.Echo('[' . s:src_dir . '] is not a directory')
+        call s:me.echo('[' . s:src_dir . '] is not a directory')
         return
       endif
       try
         exe 'cd ' . fnameescape(s:src_dir)
       catch /^.*E344.*/
-        call s:me.Echo('Could not change to directory [' . s:src_dir . ']')
+        call s:me.echo('Could not change to directory [' . s:src_dir . ']')
         return
       endtry
     endif
@@ -841,35 +779,35 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   " ----------------------------- diff -------------------------------------
   elseif s:reviewmode == 'diff'
     if len(a:argslist) > 2
-      call s:me.Echo('Fatal internal error in patchreview.vim plugin')
+      call s:me.echo('Fatal internal error in patchreview.vim plugin')
       return
     endif
     let l:patchlines = a:argslist[0]
     " passed in by default
     let l:strip_count = eval(a:argslist[1])
   else
-    call s:me.Echo('Fatal internal error in patchreview.vim plugin')
+    call s:me.echo('Fatal internal error in patchreview.vim plugin')
   endif " diff
 
   " Verify that patch command and temporary directory are available or specified
-  if ! s:CheckBinary('patch')
+  if ! s:check_binary('patch')
     return
   endif
 
-  call s:me.Echo('Source directory: ' . getcwd())
-  call s:me.Echo('------------------')
+  call s:me.echo('Source directory: ' . getcwd())
+  call s:me.echo('------------------')
   if exists('l:strip_count')
     let l:defsc = l:strip_count
   elseif s:reviewmode =~ 'patch'
     let l:defsc = 1
   else
-    call s:me.Echo('Fatal internal error in patchreview.vim plugin')
+    call s:me.echo('Fatal internal error in patchreview.vim plugin')
   endif
   try
-    call s:ExtractDiffs(l:patchlines, l:defsc)
+    call s:extract_diffs(l:patchlines, l:defsc)
   catch
-    call s:me.Echo('Exception ' . v:exception)
-    call s:me.Echo('From ' . v:throwpoint)
+    call s:me.echo('Exception ' . v:exception)
+    call s:me.echo('From ' . v:throwpoint)
     return
   endtry
   let l:cand = 0
@@ -887,9 +825,9 @@ function! <SID>_GenericReview(argslist)                                   "{{{
   let l:total_patches = len(g:patches['patch'])
   for patch in g:patches['patch']
     let l:this_patch_num += 1
-    call s:me.Status('Processing ' . l:this_patch_num . '/' . l:total_patches . ' ' . patch.filename)
+    call s:me.log('Processing ' . l:this_patch_num . '/' . l:total_patches . ' ' . patch.filename)
     if patch.type !~ '^[!+-]$'
-      call s:me.Echo('*** Skipping review generation due to unknown change [' . patch.type . ']')
+      call s:me.echo('*** Skipping review generation due to unknown change [' . patch.type . ']')
       unlet! patch
       continue
     endif
@@ -925,12 +863,12 @@ function! <SID>_GenericReview(argslist)                                   "{{{
     endif
     let bufnum = bufnr(l:relpath)
     if buflisted(bufnum) && getbufvar(bufnum, '&mod')
-      call s:me.Echo('Old buffer for file [' . l:relpath . '] exists in modified state. Skipping review.')
+      call s:me.echo('Old buffer for file [' . l:relpath . '] exists in modified state. Skipping review.')
       continue
       unlet! patch
     endif
-    let l:tmp_patch = s:TempName()
-    let l:tmp_patched = s:TempName()
+    let l:tmp_patch = s:temp_name()
+    let l:tmp_patched = s:temp_name()
     let l:tmp_patched_rej = l:tmp_patched . '.rej'  " Rejection file created by patch
 
     try
@@ -941,7 +879,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         call map(patch.content, 'v:val . "\r"')
       endif
       if writefile(patch.content, l:tmp_patch) != 0
-        call s:me.Echo('*** ERROR: Could not save patch to a temporary file.')
+        call s:me.echo('*** ERROR: Could not save patch to a temporary file.')
         continue
       endif
       "if exists('g:patchreview_debug')
@@ -991,16 +929,16 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         let l:pout = system(l:patchcmd)
         if v:errmsg != '' || v:shell_error
           let error = 1
-          call s:me.Echo('ERROR: Could not execute patch command.')
-          call s:me.Echo('ERROR:     ' . l:patchcmd)
+          call s:me.echo('ERROR: Could not execute patch command.')
+          call s:me.echo('ERROR:     ' . l:patchcmd)
           if l:pout != ''
-            call s:me.Echo('ERROR: ' . l:pout)
+            call s:me.echo('ERROR: ' . l:pout)
           endif
-          call s:me.Echo('ERROR: ' . v:errmsg)
+          call s:me.echo('ERROR: ' . v:errmsg)
           if filereadable(l:tmp_patched)
-            call s:me.Echo('ERROR: Diff partially shown.')
+            call s:me.echo('ERROR: Diff partially shown.')
           else
-            call s:me.Echo('ERROR: Diff skipped.')
+            call s:me.echo('ERROR: Diff skipped.')
           endif
         endif
       endif
@@ -1040,7 +978,7 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         endif
       endif
       if ! filereadable(l:stripped_rel_path)
-        call s:me.Echo('ERROR: Original file ' . l:stripped_rel_path . ' does not exist.')
+        call s:me.echo('ERROR: Original file ' . l:stripped_rel_path . ' does not exist.')
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
@@ -1073,15 +1011,15 @@ function! <SID>_GenericReview(argslist)                                   "{{{
             silent %!filterdiff --format=unified
           elseif ! l:filterdiff_warned
             if exists('g:patchreview_unified_rejects')
-              call s:me.Echo('WARNING: Option g:patchreview_unified_rejects requires filterdiff')
-              call s:me.Echo('WARNING: installed which I could not locate on the PATH.')
-              call s:me.Echo('WARNING: Please install it via diffutils package for your platform and make')
-              call s:me.Echo('WARNING: sure it is on the PATH.')
+              call s:me.echo('WARNING: Option g:patchreview_unified_rejects requires filterdiff')
+              call s:me.echo('WARNING: installed which I could not locate on the PATH.')
+              call s:me.echo('WARNING: Please install it via diffutils package for your platform and make')
+              call s:me.echo('WARNING: sure it is on the PATH.')
             else
-              call s:me.Echo('WARNING: Converting rejections to unified format requires filterdiff installed')
-              call s:me.Echo('WARNING: which I could not locate on the PATH.')
-              call s:me.Echo('WARNING: Please install it via diffutils package for your platform and make')
-              call s:me.Echo('WARNING: sure it is on the PATH for better readable .rej output.')
+              call s:me.echo('WARNING: Converting rejections to unified format requires filterdiff installed')
+              call s:me.echo('WARNING: which I could not locate on the PATH.')
+              call s:me.echo('WARNING: Please install it via diffutils package for your platform and make')
+              call s:me.echo('WARNING: sure it is on the PATH for better readable .rej output.')
             endif
             let l:filterdiff_warned = 1
           endif
@@ -1099,10 +1037,10 @@ function! <SID>_GenericReview(argslist)                                   "{{{
         endif
         wincmd p
         let &modeline=s:keep_modeline
-        call s:me.Echo(msgtype . '*** REJECTED *** ' . l:relpath)
-        call s:Wiggle(l:tmp_patched, l:tmp_patched_rej)
+        call s:me.echo(msgtype . '*** REJECTED *** ' . l:relpath)
+        call s:wiggle(l:tmp_patched, l:tmp_patched_rej)
       else
-        call s:me.Echo(msgtype . ' ' . l:relpath)
+        call s:me.echo(msgtype . ' ' . l:relpath)
       endif
     finally
       if ! exists('g:patchreview_persist')
@@ -1113,13 +1051,12 @@ function! <SID>_GenericReview(argslist)                                   "{{{
       unlet! patch
     endtry
   endfor
-  call s:me.Echo('-----')
-  call s:me.Echo('Done.', 0)
+  call s:me.echo('-----')
+  call s:me.echo('Done.', 0)
   unlet! g:patches
 endfunction
 "}}}
-
-function! patchreview#DiffReview(...) " {{{
+function! patchreview#diff_review(...) " {{{
   if exists('g:patchreview_prefunc')
     call call(g:patchreview_prefunc, ['Diff Review'])
   endif
@@ -1141,11 +1078,11 @@ function! patchreview#DiffReview(...) " {{{
   set eadirection=hor
   set shortmess=aW
   set shortmess=aW
-  call s:WipeMsgBuf()
+  call s:wipe_message_buffer()
 
   try
     if a:0 != 0  " :DiffReview some command with arguments
-      let l:outfile = s:TempName()
+      let l:outfile = s:temp_name()
       if a:1 =~ '^\d+$'
         " DiffReview strip_count command
         let l:cmd = join(map(deepcopy(a:000[1:]), 'shellescape(v:val)') + ['>', shellescape(l:outfile)], ' ')
@@ -1163,33 +1100,33 @@ function! patchreview#DiffReview(...) " {{{
             \ && v:shell_error == 1
         " Ignoring diff and CVS non-error
       elseif v:errmsg != '' || v:shell_error
-        call s:me.Echo(v:errmsg)
-        call s:me.Echo('Could not execute [' . l:cmd . ']')
+        call s:me.echo(v:errmsg)
+        call s:me.echo('Could not execute [' . l:cmd . ']')
         if v:shell_error
-          call s:me.Echo('Error code: ' . v:shell_error)
+          call s:me.echo('Error code: ' . v:shell_error)
         endif
-        call s:me.Echo(l:cout)
-        call s:me.Echo('Diff review aborted.')
+        call s:me.echo(l:cout)
+        call s:me.echo('Diff review aborted.')
         return
       endif
       let s:reviewmode = 'diff'
-      let l:lines = s:GetPatchFileLines(l:outfile)
-      call s:_GenericReview([l:lines, l:strip_count])
+      let l:lines = s:get_patchfile_lines(l:outfile)
+      call s:generic_review([l:lines, l:strip_count])
     else  " :DiffReview
-      call s:InitDiffModules()
+      call s:init_diff_modules()
       let l:diff = {}
       for module in keys(s:modules)
-        if s:modules[module].Detect()
-          let l:diff = s:modules[module].GetDiff()
-          "call s:me.Debug('Detected ' . module)
+        if s:modules[module].detect()
+          let l:diff = s:modules[module].get_diff()
+          "call s:me.debug('Detected ' . module)
           break
         endif
       endfor
       if !exists("l:diff['diff']") || empty(l:diff['diff'])
-        call s:me.Echo('No diff found. Make sure you are in a VCS controlled top directory.')
+        call s:me.echo('No diff found. Make sure you are in a VCS controlled top directory.')
       else
         let s:reviewmode = 'diff'
-        call s:_GenericReview([l:diff['diff'], l:diff['strip']])
+        call s:generic_review([l:diff['diff'], l:diff['strip']])
       endif
     endif
   finally
@@ -1209,8 +1146,7 @@ function! patchreview#DiffReview(...) " {{{
   endif
 endfunction
 "}}}
-
-function! <SID>InitDiffModules() " {{{
+function! s:init_diff_modules() " {{{
   if ! empty(s:modules)
     return
   endif
@@ -1218,14 +1154,14 @@ function! <SID>InitDiffModules() " {{{
         \ 'autoload/patchreview/*.vim'), '[\n\r]'),
         \ 'fnamemodify(v:val, ":t:r")')
 
-    let module = patchreview#{name}#register(s:me)
-    if !empty(module) && !has_key(s:modules, name)
-      let s:modules[name] = module
+    let l:module = patchreview#{name}#register(s:me)
+    if !empty(l:module) && !has_key(s:modules, name)
+      let s:modules[name] = l:module
     endif
-    unlet module
+    unlet l:module
   endfor
 endfunction
 "}}}
-
-" modeline
-" vim: set et fdl=4 fdm=marker fenc= ff=unix ft=vim sts=0 sw=2 ts=2 tw=79 nowrap :
+" }}}
+" }}}
+" vim: set et fdl=1 fdm=marker fenc= ff=unix ft=vim sts=0 sw=2 ts=2 tw=79 nowrap :

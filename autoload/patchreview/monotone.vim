@@ -1,24 +1,24 @@
 " Author        : Manpreet Singh < junkblocker@yahoo.com >    " {{{
-" Copyright     : 2006-2012 by Manpreet Singh
+" Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "}}}
-let s:PRemote = {}
+let s:driver = {}
 let s:monotone = {}
 
-function! s:monotone.Detect() " {{{
+function! s:monotone.detect() " {{{
   return isdirectory('_MTN')
 endfunction
 " }}}
 
-function! s:monotone.GetDiff() " {{{
-  let l:diff = s:PRemote.GenDiff('mtn diff --unified')
+function! s:monotone.get_diff() " {{{
+  let l:diff = s:driver.generate_diff('mtn diff --unified')
   return {'diff': 0, 'diff': l:diff}
 endfunction
 " }}}
 
 function! patchreview#monotone#register(remote) "{{{
-  let s:PRemote = a:remote
+  let s:driver = a:remote
   return s:monotone
 endfunction
 " }}}

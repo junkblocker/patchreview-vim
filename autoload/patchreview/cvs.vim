@@ -1,23 +1,23 @@
 " Author        : Manpreet Singh < junkblocker@yahoo.com >    " {{{
-" Copyright     : 2006-2012 by Manpreet Singh
+" Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "}}}
-let s:PRemote = {}
+let s:driver = {}
 let s:cvs = {}
 
-function! s:cvs.Detect() " {{{
+function! s:cvs.detect() " {{{
   return isdirectory('CVS')
 endfunction
 " }}}
 
-function! s:cvs.GetDiff() " {{{
-  return {'strip': 0, 'diff': s:PRemote.GenDiff('cvs diff -q -u')}
+function! s:cvs.get_diff() " {{{
+  return {'strip': 0, 'diff': s:driver.generate_diff('cvs diff -q -u')}
 endfunction
 " }}}
 
 function! patchreview#cvs#register(remote) "{{{
-  let s:PRemote = a:remote
+  let s:driver = a:remote
   return s:cvs
 endfunction
 " }}}

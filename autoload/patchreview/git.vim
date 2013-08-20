@@ -1,24 +1,24 @@
 " Author        : Manpreet Singh < junkblocker@yahoo.com >    " {{{
-" Copyright     : 2006-2012 by Manpreet Singh
+" Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "}}}
-let s:PRemote = {}
+let s:driver = {}
 let s:git = {}
 
-function! s:git.Detect() " {{{
+function! s:git.detect() " {{{
   return isdirectory('.git')
 endfunction
 " }}}
 
-function! s:git.GetDiff() " {{{
-  let l:diff = s:PRemote.GenDiff('git diff -p -U5 --no-color')
+function! s:git.get_diff() " {{{
+  let l:diff = s:driver.generate_diff('git diff -p -U5 --no-color')
   return {'strip': 1, 'diff': l:diff}
 endfunction
 " }}}
 
 function! patchreview#git#register(remote) "{{{
-  let s:PRemote = a:remote
+  let s:driver = a:remote
   return s:git
 endfunction
 " }}}

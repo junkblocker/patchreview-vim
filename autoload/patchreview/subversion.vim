@@ -1,24 +1,24 @@
 " Author        : Manpreet Singh < junkblocker@yahoo.com >    " {{{
-" Copyright     : 2006-2012 by Manpreet Singh
+" Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "}}}
-let s:PRemote = {}
+let s:driver = {}
 let s:subversion = {}
 
-function! s:subversion.Detect() " {{{
+function! s:subversion.detect() " {{{
   return isdirectory('.svn')
 endfunction
 " }}}
 
-function! s:subversion.GetDiff() " {{{
-  let l:diff = s:PRemote.GenDiff('svn diff')
+function! s:subversion.get_diff() " {{{
+  let l:diff = s:driver.generate_diff('svn diff')
   return {'diff': 0, 'diff': l:diff}
 endfunction
 " }}}
 
 function! patchreview#subversion#register(remote) "{{{
-  let s:PRemote = a:remote
+  let s:driver = a:remote
   return s:subversion
 endfunction
 " }}}
