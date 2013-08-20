@@ -5,7 +5,6 @@ patchreview.vim
 .. contents::
    :depth: 5
    :backlinks: top
-.. section-numbering::
 
 Introduction
 ============
