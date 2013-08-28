@@ -44,6 +44,13 @@ running their diff command.
 =============================================================================
 
 PatchReview Usage                      *patchreview-usage* *diffreview-usage*
+
+The following commands are available:
+
+|:DiffReview|
+|:PatchReview|
+|:ReversePatchReview|
+
                                                                 *:DiffReview*
 
   :DiffReview [[optional_strip_count] optional_diff_generation_command]
@@ -91,6 +98,14 @@ PatchReview Usage                      *patchreview-usage* *diffreview-usage*
 =============================================================================
 
 PatchReview Options                                     *patchreview-options*
+
+The following variables are available:
+
+|patchreview_patch|
+|patchreview_patch_needs_crlf|
+|patchreview_wiggle|
+|patchreview_unified_rejects|
+
 
                                                         *g:patchreview_patch*
                                                           *patchreview_patch*
@@ -152,6 +167,15 @@ PatchReview Options                                     *patchreview-options*
 <
 Hooks                                                       *patchreview-hooks*
 
+The following hook functions are available:
+
+|patchreview_prefunc|
+|patchreview_postfunc|
+
+                                                        *g:patchreview_prefunc*
+                                                          *patchreview_prefunc*
+                                                       *g:patchreview_postfunc*
+                                                         *patchreview_postfunc*
   g:patchreview_prefunc = '{function}'
   g:patchreview_postfunc = '{function}'
 

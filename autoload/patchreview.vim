@@ -10,6 +10,7 @@
 " Changelog : {{{
 "
 "   1.0.7 - Internal code style changes.
+"         - Minor improvement in help friendliness
 "
 "   1.0.6 - Convert rejects to unified format if possible unless disabled
 "
