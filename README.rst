@@ -121,6 +121,10 @@ See::
 
 for usage details.
 
+Limitations
+===========
+
+The plugin can not handle diffs with DOS/UNIX line ending changes correctly.
 
 Fork me
 =======
