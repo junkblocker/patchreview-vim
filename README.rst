@@ -124,7 +124,8 @@ for usage details.
 Limitations
 ===========
 
-The plugin can not handle diffs with DOS/UNIX line ending changes correctly.
+The plugin can not handle diffs/patches which change the line ending types between DOS, UNIX and Mac etc.
+This is a general patching problem and is not specific to this plugin only.
 
 Fork me
 =======
