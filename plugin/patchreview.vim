@@ -1,7 +1,6 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:     https://github.com/junkblocker/patchreview-vim
 " vim.org:  http://www.vim.org/scripts/script.php?script_id=1563
-
 " Version       : 1.0.7 " {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2013 by Manpreet Singh
@@ -9,7 +8,6 @@
 "                 No warranties express or implied. Use at your own risk.
 "
 "}}}
-
 " Documentation:                                                         "{{{
 " ===========================================================================
 " This plugin allows single or multiple, patch or diff based code reviews to
@@ -33,7 +31,6 @@
 "  for details.
 "
 ""}}}
-
 " init " {{{
 " Enabled only during development
 " unlet! g:loaded_patchreview
@@ -53,7 +50,6 @@ if ! has('diff')
   finish
 endif
 " }}}
-
 " End user commands                                                         "{{{
 "============================================================================
 " :PatchReview
@@ -68,7 +64,5 @@ command! -nargs=+ -complete=file ReversePatchReviewPersist let g:patchreview_per
 command! -nargs=* -complete=file DiffReview        unlet! g:patchreview_persist | call patchreview#diff_review(<f-args>)
 command! -nargs=* -complete=file DiffReviewPersist let g:patchreview_persist=1  | call patchreview#diff_review(<f-args>)
 "}}}
-
+" vim: set et fdl=1 fdm=marker fenc= ff=unix ft=vim sw=2 sts=0 ts=2 tw=79 nowrap :
 "}}}
-" modeline
-" vim: set et fdl=1 fdm=marker fenc= ff=unix ft=vim sw=2 sts=0 ts=2 tw=78 nowrap :

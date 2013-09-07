@@ -86,7 +86,7 @@ let s:me = {}
 let s:modules = {}
 " }}}
 " Functions {{{
-function! s:me.log(str)                                                 "{{{
+function! s:me.progress(str)                                                 "{{{
   if v:version >= 703
     let l:wide = min([strlen(a:str), strdisplaywidth(a:str)])
   else
@@ -100,7 +100,7 @@ endfunction
 " }}}
 function! s:me.debug(str)                                                  "{{{
   if exists('g:patchreview_debug')
-    call s:me.echo('DEBUG: ' . a:str)
+    call s:me.buflog('DEBUG: ' . a:str)
   endif
 endfunction
 "}}}
@@ -123,8 +123,8 @@ function! s:wipe_message_buffer()                                            "{{
   endif
 endfunction
 "}}}
-function! s:me.echo(...)                                                   "{{{
-  " Usage: s:me.echo(msg, [go_back])
+function! s:me.buflog(...)                                                   "{{{
+  " Usage: s:me.buflog(msg, [go_back])
   "            default go_back = 1
   "
   let l:cur_tabnr = tabpagenr()
@@ -176,12 +176,12 @@ function! s:check_binary(BinaryName)                                 "{{{
       let g:patchreview_{a:BinaryName} = a:BinaryName
       return 1
     else
-      call s:me.echo('g:patchreview_' . a:BinaryName . ' is not defined and ' . a:BinaryName . ' command could not be found on path.')
-      call s:me.echo('Please define it in your .vimrc.')
+      call s:me.buflog('g:patchreview_' . a:BinaryName . ' is not defined and ' . a:BinaryName . ' command could not be found on path.')
+      call s:me.buflog('Please define it in your .vimrc.')
       return 0
     endif
   elseif ! executable(g:patchreview_{a:BinaryName})
-    call s:me.echo('Specified g:patchreview_' . a:BinaryName . ' [' . g:patchreview_{a:BinaryName} . '] is not executable.')
+    call s:me.buflog('Specified g:patchreview_' . a:BinaryName . ' [' . g:patchreview_{a:BinaryName} . '] is not executable.')
     return 0
   else
     return 1
@@ -264,12 +264,12 @@ function! s:me.generate_diff(shell_escaped_cmd)                            "{{{
   let v:errmsg = ''
   let l:cout = system(a:shell_escaped_cmd)
   if v:errmsg != '' || v:shell_error
-    call s:me.echo(v:errmsg)
-    call s:me.echo('Could not execute [' . a:shell_escaped_cmd . ']')
+    call s:me.buflog(v:errmsg)
+    call s:me.buflog('Could not execute [' . a:shell_escaped_cmd . ']')
     if v:shell_error
-      call s:me.echo('Error code: ' . v:shell_error)
+      call s:me.buflog('Error code: ' . v:shell_error)
     endif
-    call s:me.echo(l:cout)
+    call s:me.buflog(l:cout)
   else
     let l:diff = split(l:cout, '[\n\r]')
   endif
@@ -325,7 +325,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
       endif
       let l:mat = matchlist(l:line, '^\(Binary files\|Files\) \(.\+\) and \(.+\) differ$')
       if ! empty(l:mat) && l:mat[2] != '' && l:mat[3] != ''
-        call s:me.echo('Ignoring ' . tolower(l:mat[1]) . ' ' . l:mat[2] . ' and ' . l:mat[3])
+        call s:me.buflog('Ignoring ' . tolower(l:mat[1]) . ' ' . l:mat[2] . ' and ' . l:mat[3])
         continue
       endif
       " Note - Older Perforce (around 2006) generates incorrect diffs
@@ -334,7 +334,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
       if ! empty(l:mat) && l:mat[2] != ''
         let l:p_type = '!'
         let l:filepath = l:mat[2]
-        call s:me.log('Collecting ' . l:filepath)
+        call s:me.progress('Collecting ' . l:filepath)
         let l:collect = ['--- ' . l:filepath . ' (revision ' . l:mat[1] . ')', '+++ ' .  l:filepath . ' (working copy)']
         call s:state('EXPECT_UNIFIED_RANGE_CHUNK')
         continue
@@ -369,7 +369,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
           endif
         endif
       endif
-      call s:me.log('Collecting ' . l:filepath)
+      call s:me.progress('Collecting ' . l:filepath)
       PRState 'EXPECT_15_STARS'
       let l:collect += [l:line]
       " }}}
@@ -442,7 +442,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
         let l:this_patch['content'] = l:collect
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
-        call s:me.log('Collected  ' . l:filepath)
+        call s:me.progress('Collected  ' . l:filepath)
         if l:p_type == '!'
           call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
         endif
@@ -458,7 +458,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
       let g:patches['patch'] += [l:this_patch]
       unlet! l:this_patch
       let l:line_num -= 1
-      call s:me.log('Collected  ' . l:filepath)
+      call s:me.progress('Collected  ' . l:filepath)
       if l:p_type == '!'
         call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
       endif
@@ -493,7 +493,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
           endif
         endif
       endif
-      call s:me.log('Collecting ' . l:filepath)
+      call s:me.progress('Collecting ' . l:filepath)
       call s:state('EXPECT_UNIFIED_RANGE_CHUNK')
       let l:collect += [l:line]
       continue
@@ -511,7 +511,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
         let l:this_patch = {'filename': l:filepath, 'type': l:p_type, 'content': l:collect}
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
-        call s:me.log('Collected  ' . l:filepath)
+        call s:me.progress('Collected  ' . l:filepath)
         if l:p_type == '!'
           call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
         endif
@@ -527,7 +527,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
           let l:this_patch = {'filename': l:filepath, 'type': l:p_type, 'content': l:collect}
           let g:patches['patch'] += [l:this_patch]
           unlet! l:this_patch
-          call s:me.log('Collected  ' . l:filepath)
+          call s:me.progress('Collected  ' . l:filepath)
           if l:p_type == '!'
             call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
           endif
@@ -546,7 +546,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
         let l:this_patch = {'filename': l:filepath, 'type': l:p_type, 'content': l:collect}
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
-        call s:me.log('Collected  ' . l:filepath)
+        call s:me.progress('Collected  ' . l:filepath)
         if l:p_type == '!'
           call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
         endif
@@ -578,7 +578,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
       return
     endif " }}}
   endwhile
-  "call s:me.echo(s:state())
+  "call s:me.buflog(s:state())
   if (
         \ (s:state() == 'READ_CONTEXT_CHUNK'
         \  && c_count == goal_count
@@ -592,7 +592,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
     let g:patches['patch'] += [l:this_patch]
     unlet! l:this_patch
     unlet! lines
-    call s:me.log('Collected  ' . l:filepath)
+    call s:me.progress('Collected  ' . l:filepath)
     if l:p_type == '!' || (l:p_type == '+' && s:reviewmode == 'diff')
       call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
     endif
@@ -626,7 +626,7 @@ function! patchreview#patchreview(...)                                     "{{{
     let l:lines = s:get_patchfile_lines(a:1)
     call s:generic_review([l:lines] + a:000[1:])
   catch /.*/
-    call s:me.echo('ERROR: ' . v:exception)
+    call s:me.buflog('ERROR: ' . v:exception)
   endtry
   let &eadirection = s:eadirection
   let &equalalways = s:equalalways
@@ -665,7 +665,7 @@ function! patchreview#reverse_patchreview(...)  "{{{
     let l:lines = s:get_patchfile_lines(a:1)
     call s:generic_review([l:lines] + a:000[1:])
   catch /.*/
-    call s:me.echo('ERROR: ' . v:exception)
+    call s:me.buflog('ERROR: ' . v:exception)
   endtry
   let &eadirection = s:eadirection
   let &equalalways = s:equalalways
@@ -686,9 +686,9 @@ function! s:wiggle(out, rej) " {{{
   let v:errmsg = ''
   let l:cout = system('wiggle --merge ' . shellescape(a:out) . ' ' . shellescape(a:rej) . ' > ' . shellescape(l:wiggle_out))
   if v:errmsg != '' || v:shell_error
-    call s:me.echo('ERROR: wiggle was not completely successful.')
+    call s:me.buflog('ERROR: wiggle was not completely successful.')
     if v:errmsg != ''
-      call s:me.echo('ERROR: ' . v:errmsg)
+      call s:me.buflog('ERROR: ' . v:errmsg)
     endif
   endif
   if filereadable(l:wiggle_out)
@@ -723,13 +723,13 @@ function! s:generic_review(argslist)                                   "{{{
 
   " VIM 7+ required
   if version < 700
-    call s:me.echo('This plugin needs VIM 7 or higher')
+    call s:me.buflog('This plugin needs VIM 7 or higher')
     return
   endif
 
   " +diff required
   if ! has('diff')
-    call s:me.echo('This plugin needs VIM built with +diff feature.')
+    call s:me.buflog('This plugin needs VIM built with +diff feature.')
     return
   endif
 
@@ -740,7 +740,7 @@ function! s:generic_review(argslist)                                   "{{{
   elseif s:reviewmode == 'patch'
     let patch_R_options = []
   else
-    call s:me.echo('Fatal internal error in patchreview.vim plugin')
+    call s:me.buflog('Fatal internal error in patchreview.vim plugin')
     return
   endif
 
@@ -749,11 +749,11 @@ function! s:generic_review(argslist)                                   "{{{
     let l:argc = len(a:argslist)
     if l:argc == 0 || l:argc > 3
       if s:reviewmode == 'patch'
-        call s:me.echo('PatchReview command needs 1 to 3 arguments.')
+        call s:me.buflog('PatchReview command needs 1 to 3 arguments.')
         return
       endif
       if s:reviewmode == 'rpatch'
-        call s:me.echo('ReversePatchReview command needs 1 to 3 arguments.')
+        call s:me.buflog('ReversePatchReview command needs 1 to 3 arguments.')
         return
       endif
     endif
@@ -763,13 +763,13 @@ function! s:generic_review(argslist)                                   "{{{
     if len(a:argslist) >= 2
       let s:src_dir = expand(a:argslist[1], ':p')
       if ! isdirectory(s:src_dir)
-        call s:me.echo('[' . s:src_dir . '] is not a directory')
+        call s:me.buflog('[' . s:src_dir . '] is not a directory')
         return
       endif
       try
         exe 'cd ' . fnameescape(s:src_dir)
       catch /^.*E344.*/
-        call s:me.echo('Could not change to directory [' . s:src_dir . ']')
+        call s:me.buflog('Could not change to directory [' . s:src_dir . ']')
         return
       endtry
     endif
@@ -780,14 +780,14 @@ function! s:generic_review(argslist)                                   "{{{
   " ----------------------------- diff -------------------------------------
   elseif s:reviewmode == 'diff'
     if len(a:argslist) > 2
-      call s:me.echo('Fatal internal error in patchreview.vim plugin')
+      call s:me.buflog('Fatal internal error in patchreview.vim plugin')
       return
     endif
     let l:patchlines = a:argslist[0]
     " passed in by default
     let l:strip_count = eval(a:argslist[1])
   else
-    call s:me.echo('Fatal internal error in patchreview.vim plugin')
+    call s:me.buflog('Fatal internal error in patchreview.vim plugin')
   endif " diff
 
   " Verify that patch command and temporary directory are available or specified
@@ -795,20 +795,20 @@ function! s:generic_review(argslist)                                   "{{{
     return
   endif
 
-  call s:me.echo('Source directory: ' . getcwd())
-  call s:me.echo('------------------')
+  call s:me.buflog('Source directory: ' . getcwd())
+  call s:me.buflog('------------------')
   if exists('l:strip_count')
     let l:defsc = l:strip_count
   elseif s:reviewmode =~ 'patch'
     let l:defsc = 1
   else
-    call s:me.echo('Fatal internal error in patchreview.vim plugin')
+    call s:me.buflog('Fatal internal error in patchreview.vim plugin')
   endif
   try
     call s:extract_diffs(l:patchlines, l:defsc)
   catch
-    call s:me.echo('Exception ' . v:exception)
-    call s:me.echo('From ' . v:throwpoint)
+    call s:me.buflog('Exception ' . v:exception)
+    call s:me.buflog('From ' . v:throwpoint)
     return
   endtry
   let l:cand = 0
@@ -826,9 +826,9 @@ function! s:generic_review(argslist)                                   "{{{
   let l:total_patches = len(g:patches['patch'])
   for patch in g:patches['patch']
     let l:this_patch_num += 1
-    call s:me.log('Processing ' . l:this_patch_num . '/' . l:total_patches . ' ' . patch.filename)
+    call s:me.progress('Processing ' . l:this_patch_num . '/' . l:total_patches . ' ' . patch.filename)
     if patch.type !~ '^[!+-]$'
-      call s:me.echo('*** Skipping review generation due to unknown change [' . patch.type . ']')
+      call s:me.buflog('*** Skipping review generation due to unknown change [' . patch.type . ']')
       unlet! patch
       continue
     endif
@@ -864,7 +864,7 @@ function! s:generic_review(argslist)                                   "{{{
     endif
     let bufnum = bufnr(l:relpath)
     if buflisted(bufnum) && getbufvar(bufnum, '&mod')
-      call s:me.echo('Old buffer for file [' . l:relpath . '] exists in modified state. Skipping review.')
+      call s:me.buflog('Old buffer for file [' . l:relpath . '] exists in modified state. Skipping review.')
       continue
       unlet! patch
     endif
@@ -880,7 +880,7 @@ function! s:generic_review(argslist)                                   "{{{
         call map(patch.content, 'v:val . "\r"')
       endif
       if writefile(patch.content, l:tmp_patch) != 0
-        call s:me.echo('*** ERROR: Could not save patch to a temporary file.')
+        call s:me.buflog('*** ERROR: Could not save patch to a temporary file.')
         continue
       endif
       "if exists('g:patchreview_debug')
@@ -930,16 +930,16 @@ function! s:generic_review(argslist)                                   "{{{
         let l:pout = system(l:patchcmd)
         if v:errmsg != '' || v:shell_error
           let error = 1
-          call s:me.echo('ERROR: Could not execute patch command.')
-          call s:me.echo('ERROR:     ' . l:patchcmd)
+          call s:me.buflog('ERROR: Could not execute patch command.')
+          call s:me.buflog('ERROR:     ' . l:patchcmd)
           if l:pout != ''
-            call s:me.echo('ERROR: ' . l:pout)
+            call s:me.buflog('ERROR: ' . l:pout)
           endif
-          call s:me.echo('ERROR: ' . v:errmsg)
+          call s:me.buflog('ERROR: ' . v:errmsg)
           if filereadable(l:tmp_patched)
-            call s:me.echo('ERROR: Diff partially shown.')
+            call s:me.buflog('ERROR: Diff partially shown.')
           else
-            call s:me.echo('ERROR: Diff skipped.')
+            call s:me.buflog('ERROR: Diff skipped.')
           endif
         endif
       endif
@@ -979,7 +979,7 @@ function! s:generic_review(argslist)                                   "{{{
         endif
       endif
       if ! filereadable(l:stripped_rel_path)
-        call s:me.echo('ERROR: Original file ' . l:stripped_rel_path . ' does not exist.')
+        call s:me.buflog('ERROR: Original file ' . l:stripped_rel_path . ' does not exist.')
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
@@ -1012,15 +1012,15 @@ function! s:generic_review(argslist)                                   "{{{
             silent %!filterdiff --format=unified
           elseif ! l:filterdiff_warned
             if exists('g:patchreview_unified_rejects')
-              call s:me.echo('WARNING: Option g:patchreview_unified_rejects requires filterdiff')
-              call s:me.echo('WARNING: installed which I could not locate on the PATH.')
-              call s:me.echo('WARNING: Please install it via diffutils package for your platform and make')
-              call s:me.echo('WARNING: sure it is on the PATH.')
+              call s:me.buflog('WARNING: Option g:patchreview_unified_rejects requires filterdiff')
+              call s:me.buflog('WARNING: installed which I could not locate on the PATH.')
+              call s:me.buflog('WARNING: Please install it via diffutils package for your platform and make')
+              call s:me.buflog('WARNING: sure it is on the PATH.')
             else
-              call s:me.echo('WARNING: Converting rejections to unified format requires filterdiff installed')
-              call s:me.echo('WARNING: which I could not locate on the PATH.')
-              call s:me.echo('WARNING: Please install it via diffutils package for your platform and make')
-              call s:me.echo('WARNING: sure it is on the PATH for better readable .rej output.')
+              call s:me.buflog('WARNING: Converting rejections to unified format requires filterdiff installed')
+              call s:me.buflog('WARNING: which I could not locate on the PATH.')
+              call s:me.buflog('WARNING: Please install it via diffutils package for your platform and make')
+              call s:me.buflog('WARNING: sure it is on the PATH for better readable .rej output.')
             endif
             let l:filterdiff_warned = 1
           endif
@@ -1038,10 +1038,10 @@ function! s:generic_review(argslist)                                   "{{{
         endif
         wincmd p
         let &modeline=s:keep_modeline
-        call s:me.echo(msgtype . '*** REJECTED *** ' . l:relpath)
+        call s:me.buflog(msgtype . '*** REJECTED *** ' . l:relpath)
         call s:wiggle(l:tmp_patched, l:tmp_patched_rej)
       else
-        call s:me.echo(msgtype . ' ' . l:relpath)
+        call s:me.buflog(msgtype . ' ' . l:relpath)
       endif
     finally
       if ! exists('g:patchreview_persist')
@@ -1052,8 +1052,8 @@ function! s:generic_review(argslist)                                   "{{{
       unlet! patch
     endtry
   endfor
-  call s:me.echo('-----')
-  call s:me.echo('Done.', 0)
+  call s:me.buflog('-----')
+  call s:me.buflog('Done.', 0)
   unlet! g:patches
 endfunction
 "}}}
@@ -1101,13 +1101,13 @@ function! patchreview#diff_review(...) " {{{
             \ && v:shell_error == 1
         " Ignoring diff and CVS non-error
       elseif v:errmsg != '' || v:shell_error
-        call s:me.echo(v:errmsg)
-        call s:me.echo('Could not execute [' . l:cmd . ']')
+        call s:me.buflog(v:errmsg)
+        call s:me.buflog('Could not execute [' . l:cmd . ']')
         if v:shell_error
-          call s:me.echo('Error code: ' . v:shell_error)
+          call s:me.buflog('Error code: ' . v:shell_error)
         endif
-        call s:me.echo(l:cout)
-        call s:me.echo('Diff review aborted.')
+        call s:me.buflog(l:cout)
+        call s:me.buflog('Diff review aborted.')
         return
       endif
       let s:reviewmode = 'diff'
@@ -1124,7 +1124,7 @@ function! patchreview#diff_review(...) " {{{
         endif
       endfor
       if !exists("l:diff['diff']") || empty(l:diff['diff'])
-        call s:me.echo('No diff found. Make sure you are in a VCS controlled top directory.')
+        call s:me.buflog('No diff found. Make sure you are in a VCS controlled top directory.')
       else
         let s:reviewmode = 'diff'
         call s:generic_review([l:diff['diff'], l:diff['strip']])
@@ -1164,5 +1164,5 @@ function! s:init_diff_modules() " {{{
 endfunction
 "}}}
 " }}}
-" }}}
 " vim: set et fdl=1 fdm=marker fenc= ff=unix ft=vim sts=0 sw=2 ts=2 tw=79 nowrap :
+" }}}
