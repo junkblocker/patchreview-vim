@@ -26,7 +26,7 @@ running their respective diff commands.
 
 (Keywords: codereview, codereviews, code review, patch, patchutils, diff,
 diffpatch, patchreview, patchreviews, patch review, vcs, scm, mercurial,
-bazaar, hg, bzr, cvs, monotone, mtn, git, perforce)
+bazaar, hg, bzr, cvs, monotone, mtn, git, perforce, fossil)
 
 
 Requirements

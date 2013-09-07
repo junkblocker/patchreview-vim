@@ -57,7 +57,7 @@ The following commands are available:
 
     Perform a diff review in the current directory under version control.
     Currently supports Mercurial (hg), Subversion (svn), CVS, Bazaar (bzr),
-    Monotone and Perforce (p4) version control systems.
+    Monotone, Perforce (p4) and fossil version control systems.
 
     If the optional diff generation command is supplied, that is used to
     generate the diff to review instead. This allows you to handle commands
