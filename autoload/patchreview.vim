@@ -154,10 +154,16 @@ function! s:me.buflog(...)                                                   "{{
     setlocal noswapfile
     setlocal nowrap
     setlocal nobuflisted
+    let b:just_created = 1
   endif
   setlocal modifiable
   if a:0 != 0
     silent! $put =a:1
+    if get(b:, 'just_created', 0)
+      normal! gg
+      0 delete _
+      let b:just_created = 0
+    endif
   endif
   normal! G
   setlocal nomodifiable
