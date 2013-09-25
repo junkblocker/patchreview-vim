@@ -932,10 +932,12 @@ function! s:generic_review(argslist)                                   "{{{
         endif
       endif
       let error = 0
+      let l:pout = ''
       if exists('l:patchcmd')
         let v:errmsg = ''
         let l:pout = system(l:patchcmd)
         if v:errmsg != '' || v:shell_error
+          let l:errmsg = v:errmsg
           let error = 1
           call s:me.buflog('ERROR: Could not execute patch command.')
           call s:me.buflog('ERROR:     ' . l:patchcmd)
@@ -954,6 +956,16 @@ function! s:generic_review(argslist)                                   "{{{
         "silent! exe 'edit ' . l:stripped_rel_path
       "else
         silent! exe 'tabedit ' . fnameescape(l:stripped_rel_path)
+        if filereadable(l:tmp_patched) && l:pout =~ 'Only garbage was found in the patch input'
+          topleft new
+          exe 'r ' . fnameescape(l:tmp_patch)
+          normal! gg
+          0 delete _
+          exe 'file bad_patch_for_' . fnameescape(fnamemodify(l:inputfile, ':t'))
+          setlocal nomodifiable nomodified ft=diff bufhidden=delete
+                \ buftype=nofile noswapfile nowrap nobuflisted
+          wincmd p
+        endif
       "endif
       let l:winnum = winnr()
       if ! error || filereadable(l:tmp_patched)
