@@ -87,16 +87,106 @@ let s:me = {}
 let s:modules = {}
 " }}}
 " Functions {{{
-function! s:me.progress(str)                                                 "{{{
-  if v:version >= 703
-    let l:wide = min([strlen(a:str), strdisplaywidth(a:str)])
-  else
-    let l:wide = min([strlen(a:str), &columns])
+" String display width utilities {{{
+" The string display width functions were imported from vital.vim
+" https://github.com/vim-jp/vital.vim (Public Domain)
+if exists('*strdisplaywidth')
+  " Use builtin function.
+  function! s:me.wcswidth(str) " {{{
+    return strdisplaywidth(a:str)
+  endfunction
+  " }}}
+else
+  function! s:me.wcswidth(str) " {{{
+    if a:str =~# '^[\x00-\x7f]*$'
+      return 2 * strlen(a:str)
+            \ - strlen(substitute(a:str, '[\x00-\x08\x0b-\x1f\x7f]', '', 'g'))
+    end
+
+    let l:mx_first = '^\(.\)'
+    let l:str = a:str
+    let l:width = 0
+    while 1
+      let l:ucs = char2nr(substitute(l:str, l:mx_first, '\1', ''))
+      if l:ucs == 0
+        break
+      endif
+      let l:width += s:_wcwidth(l:ucs)
+      let l:str = substitute(l:str, l:mx_first, '', '')
+    endwhile
+    return l:width
+  endfunction
+  " }}}
+  function! s:_wcwidth(ucs) " UTF-8 only. {{{
+    let l:ucs = a:ucs
+    if l:ucs > 0x7f && l:ucs <= 0xff
+      return 4
+    endif
+    if l:ucs <= 0x08 || 0x0b <= l:ucs && l:ucs <= 0x1f || l:ucs == 0x7f
+      return 2
+    endif
+    if (l:ucs >= 0x1100
+          \  && (l:ucs <= 0x115f
+          \  || l:ucs == 0x2329
+          \  || l:ucs == 0x232a
+          \  || (l:ucs >= 0x2e80 && l:ucs <= 0xa4cf
+          \      && l:ucs != 0x303f)
+          \  || (l:ucs >= 0xac00 && l:ucs <= 0xd7a3)
+          \  || (l:ucs >= 0xf900 && l:ucs <= 0xfaff)
+          \  || (l:ucs >= 0xfe30 && l:ucs <= 0xfe6f)
+          \  || (l:ucs >= 0xff00 && l:ucs <= 0xff60)
+          \  || (l:ucs >= 0xffe0 && l:ucs <= 0xffe6)
+          \  || (l:ucs >= 0x20000 && l:ucs <= 0x2fffd)
+          \  || (l:ucs >= 0x30000 && l:ucs <= 0x3fffd)
+          \  ))
+      return 2
+    endif
+    return 1
+  endfunction
+  " }}}
+endif
+function! s:me.strwidthpart(str, width) " {{{
+  if a:width <= 0
+    return ''
   endif
-  echo strpart(a:str, 0, l:wide)
-  " call s:me.debug(strpart(a:str, 0, l:wide))
-  sleep 1m
+  let l:ret = a:str
+  let l:width = s:me.wcswidth(a:str)
+  while l:width > a:width
+    let char = matchstr(l:ret, '.$')
+    let l:ret = l:ret[: -1 - len(char)]
+    let l:width -= s:me.wcswidth(char)
+  endwhile
+
+  return l:ret
+endfunction
+" }}}
+function! s:me.truncate(str, width) " {{{
+  if a:str =~# '^[\x20-\x7e]*$'
+    return len(a:str) < a:width ?
+          \ printf('%-'.a:width.'s', a:str) : strpart(a:str, 0, a:width)
+  endif
+
+  let l:ret = a:str
+  let l:width = s:me.wcswidth(a:str)
+  if l:width > a:width
+    let l:ret = s:me.strwidthpart(l:ret, a:width)
+    let l:width = s:me.wcswidth(l:ret)
+  endif
+
+  if l:width < a:width
+    let l:ret .= repeat(' ', a:width - l:width)
+  endif
+
+  return l:ret
+endfunction
+" }}}
+" }}}
+function! s:me.progress(str)                                                 "{{{
+  if ! &cmdheight
+    return
+  endif
   redraw
+  echo s:me.truncate(a:str, &columns * min([&cmdheight, 1]) - 1)
 endfunction
 " }}}
 function! s:me.debug(str)                                                  "{{{
