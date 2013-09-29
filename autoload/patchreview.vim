@@ -176,19 +176,19 @@ function! s:me.buflog(...)                                                   "{{
   endif
 endfunction
 "}}}
-function! s:check_binary(BinaryName)                                 "{{{
-  " Verify that BinaryName is specified or available
-  if ! exists('g:patchreview_' . a:BinaryName)
-    if executable(a:BinaryName)
-      let g:patchreview_{a:BinaryName} = a:BinaryName
+function! s:check_binary(binary_name)                                 "{{{
+  " Verify that binary_name is specified or available
+  if ! exists('g:patchreview_' . a:binary_name)
+    if executable(a:binary_name)
+      let g:patchreview_{a:binary_name} = a:binary_name
       return 1
     else
-      call s:me.buflog('g:patchreview_' . a:BinaryName . ' is not defined and ' . a:BinaryName . ' command could not be found on path.')
+      call s:me.buflog('g:patchreview_' . a:binary_name . ' is not defined and ' . a:binary_name . ' command could not be found on path.')
       call s:me.buflog('Please define it in your .vimrc.')
       return 0
     endif
-  elseif ! executable(g:patchreview_{a:BinaryName})
-    call s:me.buflog('Specified g:patchreview_' . a:BinaryName . ' [' . g:patchreview_{a:BinaryName} . '] is not executable.')
+  elseif ! executable(g:patchreview_{a:binary_name})
+    call s:me.buflog('Specified g:patchreview_' . a:binary_name . ' [' . g:patchreview_{a:binary_name} . '] is not executable.')
     return 0
   else
     return 1
