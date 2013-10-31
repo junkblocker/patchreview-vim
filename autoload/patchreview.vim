@@ -1078,12 +1078,14 @@ function! s:generic_review(argslist)                                   "{{{
           endif
           let &filetype = l:filetype
           let &fdm = 'diff'
+          normal! zM
           wincmd p
           let &modeline=s:keep_modeline
         else
           silent! vnew
           let &filetype = l:filetype
           let &fdm = 'diff'
+          normal! zM
           wincmd p
         endif
       endif
