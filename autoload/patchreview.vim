@@ -1,13 +1,20 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.0.7                                                     {{{
+" Version       : 1.0.8                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
+"
+"   1.0.8 - Fix embarassing breakage
+"         - Ensure folds are closed at diff creation
+          - Make string truncation wide character aware for vim older than 7.3
+          - Minor code style change
+          - Show parse result in case of inapplicable patch
+          - Prevent empty blank line 1 in log buffer
 "
 "   1.0.7 - Added support for fossil
 "         - Internal code style changes.
@@ -309,7 +316,7 @@ function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
   let s:guess_strip[a:default_strip] += 1
 endfunction
 " }}}
-function! s:state(...)  " For easy manipulation of diff parsing state "{{{
+function! s:state(...)  " For easy manipulation of diff parsing state {{{
   if a:0 != 0
     let s:PARSE_STATE = a:1
     " call s:me.debug('Set PARSE_STATE: ' . a:1)
@@ -467,7 +474,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
         endif
       endif
       call s:me.progress('Collecting ' . l:filepath)
-      PRState 'EXPECT_15_STARS'
+      call s:state('EXPECT_15_STARS')
       let l:collect += [l:line]
       " }}}
     elseif s:state() == 'EXPECT_15_STARS' " {{{
@@ -476,7 +483,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
         let l:line_num -= 1
         continue
       endif
-      PRState 'EXPECT_CONTEXT_CHUNK_HEADER_1'
+      call s:state('EXPECT_CONTEXT_CHUNK_HEADER_1')
       let l:collect += [l:line]
       " }}}
     elseif s:state() == 'EXPECT_CONTEXT_CHUNK_HEADER_1' " {{{
@@ -487,7 +494,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
         continue
       endif
       let l:collect += [l:line]
-      PRState 'READ_TILL_CONTEXT_FRAGMENT_2'
+      call s:state('READ_TILL_CONTEXT_FRAGMENT_2')
       continue
       " }}}
     elseif s:state() == 'READ_TILL_CONTEXT_FRAGMENT_2' " {{{
@@ -518,7 +525,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
         if empty(l:mat) || l:mat[1] == ''
           if l:line =~ '^\*\{15}$'
             let l:collect += [l:line]
-            PRState 'EXPECT_CONTEXT_CHUNK_HEADER_1'
+            call s:state('EXPECT_CONTEXT_CHUNK_HEADER_1')
             continue
           else
             let l:line_num -= 1
@@ -548,7 +555,7 @@ function! s:extract_diffs(lines, default_strip_count)                       "{{{
       endif
       if l:line =~ '^\*\{15}$'
         let l:collect += [l:line]
-        PRState 'EXPECT_CONTEXT_CHUNK_HEADER_1'
+        call s:state('EXPECT_CONTEXT_CHUNK_HEADER_1')
         continue
       endif
       let l:this_patch = {'filename': l:filepath, 'type':  l:p_type, 'content':  l:collect}
