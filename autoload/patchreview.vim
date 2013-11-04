@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.0.8                                                     {{{
+" Version       : 1.0.9                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2013 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -9,12 +9,14 @@
 "
 " Changelog : {{{
 "
+"   1.0.9 - Commented lines left uncommented
+"
 "   1.0.8 - Fix embarassing breakage
 "         - Ensure folds are closed at diff creation
-          - Make string truncation wide character aware for vim older than 7.3
-          - Minor code style change
-          - Show parse result in case of inapplicable patch
-          - Prevent empty blank line 1 in log buffer
+"         - Make string truncation wide character aware for vim older than 7.3
+"         - Minor code style change
+"         - Show parse result in case of inapplicable patch
+"         - Prevent empty blank line 1 in log buffer
 "
 "   1.0.7 - Added support for fossil
 "         - Internal code style changes.
