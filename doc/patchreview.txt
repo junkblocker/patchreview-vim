@@ -105,6 +105,7 @@ The following variables are available:
 |patchreview_patch_needs_crlf|
 |patchreview_wiggle|
 |patchreview_unified_rejects|
+|patchreview_reverse_windows|
 
 
                                                         *g:patchreview_patch*
@@ -164,6 +165,19 @@ The following variables are available:
 
     Example:
         let g:patchreview_unified_rejects = 1
+<
+
+                                              *g:patchreview_reverse_windows*
+                                                *patchreview_reverse_windows*
+  g:patchreview_reverse_windows = {1}
+      By default, the current version of each file will be displayed on the
+      right, and the results of the patch or diff review will be on the left.
+      This is the same model used by the built-in :vert diffpatch command.
+
+      To reverse these windows, set this option to 1.
+
+    Example:
+        let g:patchreview_reverse_windows = 1
 <
 Hooks                                                       *patchreview-hooks*
 

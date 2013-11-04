@@ -850,6 +850,12 @@ function! s:generic_review(argslist)                                   "{{{
     return
   endif
 
+  if (! exists('g:patchreview_reverse_windows') || g:patchreview_reverse_windows == 0)
+    let l:leftright = 'topleft'
+  else
+    let l:leftright = 'botright'
+  endif
+
   " ----------------------------- patch ------------------------------------
   if s:reviewmode =~ 'patch'
     let l:argc = len(a:argslist)
@@ -1056,7 +1062,7 @@ function! s:generic_review(argslist)                                   "{{{
       "else
         silent! exe 'tabedit ' . fnameescape(l:stripped_rel_path)
         if filereadable(l:tmp_patched) && l:pout =~ 'Only garbage was found in the patch input'
-          topleft new
+          exe l:leftright new
           exe 'r ' . fnameescape(l:tmp_patch)
           normal! gg
           0 delete _
@@ -1073,7 +1079,7 @@ function! s:generic_review(argslist)                                   "{{{
           " modelines in loaded files mess with diff comparison
           let s:keep_modeline=&modeline
           let &modeline=0
-          silent! exe 'vert diffsplit ' . fnameescape(l:tmp_patched)
+          silent! exe l:leftright 'vert diffsplit ' . fnameescape(l:tmp_patched)
           setlocal noswapfile
           setlocal syntax=none
           setlocal bufhidden=delete
@@ -1103,7 +1109,7 @@ function! s:generic_review(argslist)                                   "{{{
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
-        silent! exe 'topleft split ' . fnameescape(l:tmp_patch)
+        silent! exe l:leftright 'split ' . fnameescape(l:tmp_patch)
         setlocal noswapfile
         setlocal syntax=none
         setlocal bufhidden=delete
@@ -1122,7 +1128,7 @@ function! s:generic_review(argslist)                                   "{{{
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
-        silent! exe 'topleft split ' . fnameescape(l:tmp_patched_rej)
+        silent! exe l:leftright 'split ' . fnameescape(l:tmp_patched_rej)
         " Try to convert rejects to unified format unless explicitly disabled
         if (! exists('g:patchreview_unified_rejects') || g:patchreview_unified_rejects == 1) &&
               \ getline(1) =~ '\m\*\{15}'
