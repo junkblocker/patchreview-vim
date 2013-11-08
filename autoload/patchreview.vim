@@ -93,6 +93,10 @@ let s:msgbufname = '--PatchReview_Messages--'
 
 let s:me = {}
 
+let s:vsplit = get(g:, 'patchreview_split_right', 0)
+      \ ? 'vertical rightbelow'
+      \ : 'vertical leftabove'
+
 let s:modules = {}
 " }}}
 " Functions {{{
@@ -801,7 +805,7 @@ function! s:wiggle(out, rej) " {{{
     " modelines in loaded files mess with diff comparison
     let s:keep_modeline=&modeline
     let &modeline=0
-    silent! exe 'vert diffsplit ' . fnameescape(l:wiggle_out)
+    silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:wiggle_out)
     setlocal noswapfile
     setlocal syntax=none
     setlocal bufhidden=delete
@@ -814,7 +818,7 @@ function! s:wiggle(out, rej) " {{{
       silent! 0f
     endif
     let &modeline=s:keep_modeline
-    wincmd w
+    wincmd p
   endif
 endfunction
 " }}}
@@ -1073,7 +1077,7 @@ function! s:generic_review(argslist)                                   "{{{
           " modelines in loaded files mess with diff comparison
           let s:keep_modeline=&modeline
           let &modeline=0
-          silent! exe 'vert diffsplit ' . fnameescape(l:tmp_patched)
+          silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
           setlocal noswapfile
           setlocal syntax=none
           setlocal bufhidden=delete
@@ -1091,7 +1095,7 @@ function! s:generic_review(argslist)                                   "{{{
           wincmd p
           let &modeline=s:keep_modeline
         else
-          silent! vnew
+          silent! exe s:vsplit . ' new'
           let &filetype = l:filetype
           let &fdm = 'diff'
           normal! zM

@@ -103,8 +103,9 @@ The following variables are available:
 
 |patchreview_patch|
 |patchreview_patch_needs_crlf|
-|patchreview_wiggle|
+patchreview_split_right
 |patchreview_unified_rejects|
+|patchreview_wiggle|
 
 
                                                         *g:patchreview_patch*
@@ -125,7 +126,7 @@ The following variables are available:
 
                                               *g:patchreview_patch_needs_crlf*
                                                 *patchreview_patch_needs_crlf*
-  g:patchreview_patch_needs_crlf = {1}
+  g:patchreview_patch_needs_crlf = {0|1}
       Optional flag to deal with patch command requiring DOS line endings in
       patch files and diffs to work. Useful on Windows with UnxUtils patch.exe.
 
@@ -134,20 +135,16 @@ The following variables are available:
            let g:patchreview_patch_needs_crlf = 1
 <
 
-                                                        *g:patchreview_wiggle*
-                                                          *patchreview_wiggle*
-  g:patchreview_wiggle = {string}
-      Optional path to the wiggle ( http://linux.die.net/man/1/wiggle )
-      utility. If specified, |PatchReview| and |ReversePatchReview| commands
-      use it to create an addition diff when a review fails with some
-      conflicts/rejections.
+                                                   *g:patchreview_split_right*
+                                                     *patchreview_split_right*
+  g:patchreview_split_right = {0|1}
+      Optional flag to keep the current source on the left and to open the diff
+      splits towards the right side or the current source file.
 
-    Examples:
-        (On Windows with Cygwin) >
-           let g:patchreview_patch = 'c:\\cygwin\\bin\\patch.exe'
-<
-        (On *nix systems) >
-           let g:patchreview_patch = '/usr/bin/gpatch'
+      Default value is 0.
+
+    Example: >
+           let g:patchreview_split_right = 1
 <
 
                                                *g:patchreview_unified_rejects*
@@ -162,9 +159,26 @@ The following variables are available:
       installed on the PATH. filterdiff can be installed via the patchutils
       package for your platform.
 
-    Example:
+    Example: >
         let g:patchreview_unified_rejects = 1
 <
+
+                                                        *g:patchreview_wiggle*
+                                                          *patchreview_wiggle*
+  g:patchreview_wiggle = {string}
+      Optional path to the wiggle ( http://linux.die.net/man/1/wiggle )
+      utility. If specified, |PatchReview| and |ReversePatchReview| commands
+      use it to create an addition diff when a review fails with some
+      conflicts/rejections.
+
+    Examples:
+        (On Windows with Cygwin) >
+           let g:patchreview_patch = 'c:\\cygwin\\bin\\wiggle.exe'
+<
+        (On *nix systems) >
+           let g:patchreview_patch = '/usr/local/bin/wiggle'
+<
+
 Hooks                                                       *patchreview-hooks*
 
 The following hook functions are available:
