@@ -1,0 +1,23 @@
+diff --git a/x b/x
+index 5d361ad..33757f0 100644
+--- a/x
++++ b/x
+@@ -1,7 +1,7 @@
+ foo
+ bar
+ 
+-fubar
++foobar
+ baz
+ quux
+ hoge
+@@ -9,6 +9,9 @@
+ a
+ b
+ c
++d
++e
++f
+ g
+ h
+ i
