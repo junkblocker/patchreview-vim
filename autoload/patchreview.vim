@@ -1,13 +1,16 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.1.0                                                     {{{
+" Version       : 1.1.1                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2013 by Manpreet Singh
+" Copyright     : 2006-2014 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
+"
+"   1.1.1 - Better filepath/strip level calculation
+"           Some cleanup
 "
 "   1.1.0 - Added option to open diffs on the right
 "         - Added some basic tests (internal)
@@ -198,6 +201,7 @@ endfunction
 " }}}
 " }}}
 function! s:me.progress(str)                                                 "{{{
+  " call s:me.debug(a:str)
   if ! &cmdheight
     return
   endif
@@ -251,9 +255,9 @@ function! s:me.buflog(...)                                                   "{{
       exe l:winnum . 'wincmd w'
     endif
   else
-    let bufnum = bufnr(s:msgbufname)
-    let wcmd = bufnum == -1 ? s:msgbufname : '+buffer' . bufnum
-    exe 'silent! botright 5split ' . wcmd
+    let l:bufnum = bufnr(s:msgbufname)
+    let l:wcmd = l:bufnum == -1 ? s:msgbufname : '+buffer' . l:bufnum
+    exe 'silent! botright 5split ' . l:wcmd
     let s:msgbuftabnr = tabpagenr()
     setlocal buftype=nofile
     setlocal bufhidden=delete
@@ -302,6 +306,7 @@ function! s:check_binary(binary_name)                                 "{{{
 endfunction
 "}}}
 function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
+  " call s:me.debug("Trying to guess strip level for " . a:diff_file_path . " with " .a:default_strip . " as default")
   if stridx(a:diff_file_path, '/') != -1
     let l:splitchar = '/'
   elseif stridx(a:diff_file_path, '\') !=  -1
@@ -390,6 +395,7 @@ function! s:me.generate_diff(shell_escaped_cmd)                            "{{{
 endfunction
 " }}}
 function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
+  " call s:me.debug("patchreview#extract_diffs called with default_strip_count " . a:default_strip_count)
   " Sets g:patches = {'fail':'', 'patch':[
   " {
   "  'filename': filepath
@@ -475,13 +481,10 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
           let l:filepath = l:p_first_file
         else
           let l:p_type = '!'
-          if l:p_first_file =~ '^//'  " A Perforce diff
-            let l:filepath = l:p_second_file
-          else
-            let l:filepath = l:p_first_file
-          endif
+          let l:filepath = l:p_second_file
         endif
       endif
+      " call s:me.debug('l:p_type ' . l:p_type)
       call s:me.progress('Collecting ' . l:filepath)
       call s:state('EXPECT_15_STARS')
       let l:collect += [l:line]
@@ -913,7 +916,7 @@ function! s:generic_review(argslist)                                   "{{{
   if exists('l:strip_count')
     let l:defsc = l:strip_count
   elseif s:reviewmode =~ 'patch'
-    let l:defsc = 1
+    let l:defsc = 0
   else
     call s:me.buflog('Fatal internal error in patchreview.vim plugin')
   endif
@@ -958,25 +961,25 @@ function! s:generic_review(argslist)                                   "{{{
     endwhile
     if patch.type == '!'
       if s:reviewmode =~ 'patch'
-        let msgtype = 'Patch modifies file: '
+        let l:msgtype = 'Patch modifies file: '
       elseif s:reviewmode == 'diff'
-        let msgtype = 'File has changes: '
+        let l:msgtype = 'File has changes: '
       endif
     elseif patch.type == '+'
       if s:reviewmode =~ 'patch'
-        let msgtype = 'Patch adds file    : '
+        let l:msgtype = 'Patch adds file    : '
       elseif s:reviewmode == 'diff'
-        let msgtype = 'New file        : '
+        let l:msgtype = 'New file        : '
       endif
     elseif patch.type == '-'
       if s:reviewmode =~ 'patch'
-        let msgtype = 'Patch removes file : '
+        let l:msgtype = 'Patch removes file : '
       elseif s:reviewmode == 'diff'
-        let msgtype = 'Removed file    : '
+        let l:msgtype = 'Removed file    : '
       endif
     endif
-    let bufnum = bufnr(l:relpath)
-    if buflisted(bufnum) && getbufvar(bufnum, '&mod')
+    let l:bufnum = bufnr(l:relpath)
+    if buflisted(l:bufnum) && getbufvar(l:bufnum, '&mod')
       call s:me.buflog('Old buffer for file [' . l:relpath . '] exists in modified state. Skipping review.')
       continue
       unlet! patch
@@ -1165,10 +1168,10 @@ function! s:generic_review(argslist)                                   "{{{
         endif
         wincmd p
         let &modeline=s:keep_modeline
-        call s:me.buflog(msgtype . '*** REJECTED *** ' . l:relpath)
+        call s:me.buflog(l:msgtype . '*** REJECTED *** ' . l:relpath)
         call s:wiggle(l:tmp_patched, l:tmp_patched_rej)
       else
-        call s:me.buflog(msgtype . ' ' . l:relpath)
+        call s:me.buflog(l:msgtype . ' ' . l:relpath)
       endif
     finally
       if ! exists('g:patchreview_persist')

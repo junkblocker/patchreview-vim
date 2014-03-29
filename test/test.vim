@@ -41,6 +41,9 @@ try
     call patchreview#extract_diffs(l:patchlines, 0)
     if g:patches !=#  a:expected_parse
       echomsg "Parsing" a:patchfile "failed."
+      echomsg "Expected:"
+      call s:dump(a:expected_parse)
+      echomsg "Actual:"
       call s:dump(g:patches)
     else
       echomsg "Parsing" a:patchfile "succeeded."
@@ -99,7 +102,7 @@ try
         \       '  foo',
         \       '  bar'
         \     ],
-        \     'filename': '../a/b',
+        \     'filename': 'a/b',
         \     'type': '!'
         \   },
         \   {
@@ -114,7 +117,7 @@ try
         \       '+     53,',
         \       '  /**/'
         \     ],
-        \     'filename': '../k/x/y',
+        \     'filename': 'x/y',
         \     'type': '!'
         \   }
         \ ]
