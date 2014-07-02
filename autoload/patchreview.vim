@@ -330,6 +330,10 @@ function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
   let s:guess_strip[a:default_strip] += 1
 endfunction
 " }}}
+function s:is_bsd() " {{{
+  return filereadable('/etc/rc.subr')
+endfunction
+" }}}
 function! s:state(...)  " For easy manipulation of diff parsing state {{{
   if a:0 != 0
     let s:PARSE_STATE = a:1
@@ -1004,7 +1008,7 @@ function! s:generic_review(argslist)                                   "{{{
       "endif
       if patch.type == '+' && s:reviewmode =~ 'patch'
         let l:inputfile = ''
-        if filereadable('/etc/rc.conf')
+        if s:is_bsd()
           " BSD patch is not GNU patch but works just fine without the
           " unavailable --binary option
           let l:patchcmd = g:patchreview_patch . ' '
@@ -1024,7 +1028,7 @@ function! s:generic_review(argslist)                                   "{{{
         unlet! l:patchcmd
       else
         let l:inputfile = expand(l:stripped_rel_path, ':p')
-        if filereadable('/etc/rc.conf')
+        if s:is_bsd()
           " BSD patch is not GNU patch but works just fine without the
           " unavailable --binary option
           let l:patchcmd = g:patchreview_patch . ' '
