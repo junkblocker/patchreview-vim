@@ -1,23 +1,29 @@
+# random comment line
 diff --git a/x b/x
 index 5d361ad..33757f0 100644
 --- a/x
+# random comment line
 +++ b/x
 @@ -1,7 +1,7 @@
  foo
  bar
  
 -fubar
+# random comment line
 +foobar
  baz
  quux
  hoge
 @@ -9,6 +9,9 @@
+# random comment line
  a
  b
  c
 +d
 +e
+# random comment line
 +f
  g
  h
  i
+# random comment line

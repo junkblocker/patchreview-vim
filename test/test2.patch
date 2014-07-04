@@ -1,12 +1,15 @@
 cruft
+# random comment line
 more cruft
 ------------
 
 *** ../a/b	2013-06-29 13:22:22.000000000 +0800
+# random comment line
 --- a/b	2013-10-12 20:22:22.000000000 +0800
 ***************
 *** 1,4 ****
 ! " stuff.
+# random comment line
   
   foo
   bar
@@ -22,9 +25,11 @@ more cruft
 --- 740,743 ----
   {   /* Add new patch number below this line */
 + /**/
+# random comment line
 +     53,
   /**/
 
 cruft at the end
 
 and some more
+# random comment line

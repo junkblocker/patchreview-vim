@@ -1,13 +1,16 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.1.1                                                     {{{
+" Version       : 1.2.0                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2014 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
+"
+"   1.2.0 - Support # prefixed comment lines in patches
+"           Better FreeBSD detection
 "
 "   1.1.1 - Better filepath/strip level calculation
 "           Some cleanup
@@ -431,6 +434,9 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
     let l:line = a:lines[l:line_num]
     " call s:me.debug(l:line)
     let l:line_num += 1
+    if l:line =~ '^#'
+      continue
+    endif
     if s:state() == 'START' " {{{
       let l:mat = matchlist(l:line, '^--- \([^\t]\+\).*$')
       if ! empty(l:mat) && l:mat[1] != ''
