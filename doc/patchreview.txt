@@ -193,15 +193,28 @@ The following hook functions are available:
   g:patchreview_prefunc = '{function}'
   g:patchreview_postfunc = '{function}'
 
-      A function to be called before starting or finishing review
-      respectively. For example, the following example shows a way to use this
-      to create a way to get notifications when a long review finishes on a
-      Mac OS X machine. >
+      A callback function to be called before starting or finishing review
+      respectively.
 
-      function MyNotify(review_type)
-          system('say "' . review_type . ' completed"')
+      The first argument is review type - 'Patch Review', 'Diff Review' or
+      'Reverse Patch Review'.
+
+      The rest of the arguments are the arguments passed to the call.
+
+      For example, the following shows a way to use this to
+
+      1. create a way to get notifications when a long review finishes on a
+         Mac OS X machine.
+      2. open the original patch file too when review is completed. >
+
+      function NotifyAndOpenOriginalPatchfile(review_kind, ...)
+          system('say ' . fnameescape(a:review_kind) . ' completed.')
+          if a:review_kind =~ 'Patch' && filereadable(a:1)
+              wincmd n
+              exe ":e " . fnameescape(a:1)
+          endif
       endfunction
-      let g:patchreview_postfunc = 'MyNotify'
+      let g:patchreview_postfunc = 'NotifyAndOpenOriginalPatchfile'
 <
 
 Adding new version control plugins                         *patchreview-plugins*

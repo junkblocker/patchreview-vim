@@ -727,8 +727,9 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
 endfunction
 "}}}
 function! patchreview#patchreview(...)                                     "{{{
+  let l:callback_args = ['Patch Review'] + deepcopy(a:000)
   if exists('g:patchreview_prefunc')
-    call call(g:patchreview_prefunc, ['Patch Review'])
+    call call(g:patchreview_prefunc, l:callback_args)
   endif
   augroup patchreview_plugin
     autocmd!
@@ -761,13 +762,14 @@ function! patchreview#patchreview(...)                                     "{{{
   let &shortmess = s:save_shortmess
   augroup! patchreview_plugin
   if exists('g:patchreview_postfunc')
-    call call(g:patchreview_postfunc, ['Patch Review'])
+    call call(g:patchreview_postfunc, l:callback_args)
   endif
 endfunction
 "}}}
 function! patchreview#reverse_patchreview(...)  "{{{
+  let l:callback_args = ['Reverse Patch Review'] + deepcopy(a:000)
   if exists('g:patchreview_prefunc')
-    call call(g:patchreview_prefunc, ['Reverse Patch Review'])
+    call call(g:patchreview_prefunc, l:callback_args)
   endif
   augroup patchreview_plugin
     autocmd!
@@ -800,7 +802,7 @@ function! patchreview#reverse_patchreview(...)  "{{{
   let &shortmess = s:save_shortmess
   augroup! patchreview_plugin
   if exists('g:patchreview_postfunc')
-    call call(g:patchreview_postfunc, ['Reverse Patch Review'])
+    call call(g:patchreview_postfunc, l:callback_args)
   endif
 endfunction
 "}}}
@@ -1198,8 +1200,9 @@ function! s:generic_review(argslist)                                   "{{{
 endfunction
 "}}}
 function! patchreview#diff_review(...) " {{{
+  let l:callback_args = ['Diff Review'] + deepcopy(a:000)
   if exists('g:patchreview_prefunc')
-    call call(g:patchreview_prefunc, ['Diff Review'])
+    call call(g:patchreview_prefunc, l:callback_args)
   endif
   augroup patchreview_plugin
     autocmd!
@@ -1283,7 +1286,7 @@ function! patchreview#diff_review(...) " {{{
     augroup! patchreview_plugin
   endtry
   if exists('g:patchreview_postfunc')
-    call call(g:patchreview_postfunc, ['Diff Review'])
+    call call(g:patchreview_postfunc, l:callback_args)
   endif
 endfunction
 "}}}
