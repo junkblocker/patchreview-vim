@@ -12,7 +12,7 @@ endfunction
 " }}}
 function! s:subversion.get_diff() " {{{
   let l:diff = s:driver.generate_diff('svn diff')
-  return {'diff': 0, 'diff': l:diff}
+  return {'strip': 0, 'diff': l:diff}
 endfunction
 " }}}
 function! patchreview#subversion#register(remote) "{{{
