@@ -68,6 +68,13 @@ Example 2: Installation with vundle
 ::
 
       Bundle "junkblocker/patchreview-vim"
+      
+Example 3: Installation with Pathogen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+      git clone https://github.com/junkblocker/patchreview-vim/ ~/.vim/bundle
 
 Option 2: Install by hand
 -------------------------
