@@ -1,13 +1,16 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.2.0                                                     {{{
+" Version       : 1.2.1                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2014 by Manpreet Singh
+" Copyright     : 2006-2015 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
+"
+"   1.2.1 - Added pathogen instructions (Daniel Lobato García)
+"           Fixed subversion support (wilywampa, Michael Leuchtenburg)
 "
 "   1.2.0 - Support # prefixed comment lines in patches
 "           Better FreeBSD detection
