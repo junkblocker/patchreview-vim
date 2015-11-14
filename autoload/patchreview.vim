@@ -391,7 +391,7 @@ function! s:me.generate_diff(shell_escaped_cmd)                            "{{{
   let l:diff = []
   let v:errmsg = ''
   let l:cout = system(a:shell_escaped_cmd)
-  if v:errmsg != '' || v:shell_error
+  if v:errmsg != '' || v:shell_error && split(a:shell_escaped_cmd)[0] != 'bzr'
     call s:me.buflog(v:errmsg)
     call s:me.buflog('Could not execute [' . a:shell_escaped_cmd . ']')
     if v:shell_error
@@ -1243,7 +1243,7 @@ function! patchreview#diff_review(...) " {{{
       let v:errmsg = ''
       let l:cout = system(l:cmd)
       if v:errmsg == '' &&
-            \  (a:0 != 0 && l:binary =~ '^\(cvs\|diff\)$')
+            \  (a:0 != 0 && l:binary =~ '^\(cvs\|diff\|bzr\)$')
             \ && v:shell_error == 1
         " Ignoring diff and CVS non-error
       elseif v:errmsg != '' || v:shell_error
