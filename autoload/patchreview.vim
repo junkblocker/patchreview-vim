@@ -1230,7 +1230,7 @@ function! patchreview#diff_review(...) " {{{
   try
     if a:0 != 0  " :DiffReview some command with arguments
       let l:outfile = s:temp_name()
-      if a:1 =~ '^\d+$'
+      if a:1 =~ '^\d\+$'
         " DiffReview strip_count command
         let l:cmd = join(map(deepcopy(a:000[1:]), 'shellescape(v:val)') + ['>', shellescape(l:outfile)], ' ')
         let l:binary = copy(a:000[1])
