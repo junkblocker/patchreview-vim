@@ -2,21 +2,28 @@
                     Version 1.2.1 (for Vim version 7.0 or higher)
 
                 Author: Manpreet Singh < junkblocker@yahoo.com >
-                   Copyright (C) 2006-2014 by Manpreet Singh
+                   Copyright (C) 2006-2016 by Manpreet Singh
               License : This file is placed in the public domain.
             No warranties express or implied. Use at your own risk.
 
 =============================================================================
 
-CONTENTS                    *patchreview* *diffreview* *patchreview-contents*
+CONTENTS                                               *PatchReview* *DiffReview*
+                                                       *patchreview* *diffreview*
+                                                       *patchreview-contents*
 
   1. Contents.........................................: |patchreview-contents|
   2. Introduction.....................................: |patchreview-intro|
   3. PatchReview Usage................................: |patchreview-usage|
-     4.1 DiffReview Usage.............................: |:DiffReview|
-     4.2 PatchReview Usage............................: |:PatchReview|
-     4.3 ReversePatchReview Usage.....................: |:ReversePatchReview|
+     3.1 DiffReview Usage.............................: |:DiffReview|
+     3.2 PatchReview Usage............................: |:PatchReview|
+     3.3 ReversePatchReview Usage.....................: |:ReversePatchReview|
   4. PatchReview options..............................: |patchreview-options|
+     4.1 Optional path to the 'patch' binary..........: |patchreview_patch|
+     4.2 Dealing with DOS line endings................: |patchreview_patch_needs_crlf|
+     4.3 Vertical split direction control.............: |patchreview_split_right|
+     4.4 Hide/show generated .rej files...............: |patchreview_unified_rejects|
+     4.5 Optional path to 'wiggle' binary.............: |patchreview_wiggle|
   5. Hooks............................................: |patchreview-hooks|
   6. Adding new version control plugins...............: |patchreview-plugins|
 
@@ -103,7 +110,7 @@ The following variables are available:
 
 |patchreview_patch|
 |patchreview_patch_needs_crlf|
-patchreview_split_right
+|patchreview_split_right|
 |patchreview_unified_rejects|
 |patchreview_wiggle|
 
@@ -167,7 +174,7 @@ patchreview_split_right
                                                           *patchreview_wiggle*
   g:patchreview_wiggle = {string}
       Optional path to the wiggle ( http://linux.die.net/man/1/wiggle )
-      utility. If specified, |PatchReview| and |ReversePatchReview| commands
+      utility. If specified, |:PatchReview| and |:ReversePatchReview| commands
       use it to create an addition diff when a review fails with some
       conflicts/rejections.
 
