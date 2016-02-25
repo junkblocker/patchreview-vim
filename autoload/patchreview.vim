@@ -3,7 +3,7 @@
 
 " Version       : 1.2.1                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2015 by Manpreet Singh
+" Copyright     : 2006-2016 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
@@ -207,7 +207,7 @@ endfunction
 " }}}
 " }}}
 function! s:me.progress(str)                                                 "{{{
-  " call s:me.debug(a:str)
+  call s:me.debug(a:str)
   if ! &cmdheight
     return
   endif
@@ -216,7 +216,7 @@ function! s:me.progress(str)                                                 "{{
 endfunction
 " }}}
 function! s:me.debug(str)                                                  "{{{
-  if exists('g:patchreview_debug')
+  if exists('g:patchreview_debug') && g:patchreview_debug
     call s:me.buflog('DEBUG: ' . a:str)
   endif
 endfunction
@@ -312,7 +312,7 @@ function! s:check_binary(binary_name)                                 "{{{
 endfunction
 "}}}
 function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
-  " call s:me.debug("Trying to guess strip level for " . a:diff_file_path . " with " .a:default_strip . " as default")
+  call s:me.debug("Trying to guess strip level for " . a:diff_file_path . " with " .a:default_strip . " as default")
   if stridx(a:diff_file_path, '/') != -1
     let l:splitchar = '/'
   elseif stridx(a:diff_file_path, '\') !=  -1
@@ -326,13 +326,13 @@ function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
     if len(l:path) >= i
       if filereadable(join(['.'] + l:path[i : ], l:splitchar))
         let s:guess_strip[i] += 1
-        " call s:me.debug("Guessing strip: " . i)
+        call s:me.debug("Guessing strip: " . i)
         return
       endif
     endif
     let i = i + 1
   endwhile
-  " call s:me.debug("REALLY Guessing strip: " . a:default_strip)
+  call s:me.debug("REALLY Guessing strip: " . a:default_strip)
   let s:guess_strip[a:default_strip] += 1
 endfunction
 " }}}
@@ -342,8 +342,10 @@ endfunction
 " }}}
 function! s:state(...)  " For easy manipulation of diff parsing state {{{
   if a:0 != 0
+    if ! exists('s:PARSE_STATE') || s:PARSE_STATE != a:1
+      call s:me.debug('Set PARSE_STATE: ' . a:1)
+    endif
     let s:PARSE_STATE = a:1
-    " call s:me.debug('Set PARSE_STATE: ' . a:1)
   else
     if ! exists('s:PARSE_STATE')
       let s:PARSE_STATE = 'START'
@@ -382,7 +384,6 @@ function! patchreview#get_patchfile_lines(patchfile)                      " {{{
   let l:patchfile = expand(a:patchfile, ":p")
   if ! filereadable(expand(l:patchfile))
     throw "File " . l:patchfile . " is not readable"
-    return
   endif
   return readfile(l:patchfile, 'b')
 endfunction
@@ -405,7 +406,7 @@ function! s:me.generate_diff(shell_escaped_cmd)                            "{{{
 endfunction
 " }}}
 function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
-  " call s:me.debug("patchreview#extract_diffs called with default_strip_count " . a:default_strip_count)
+  call s:me.debug("patchreview#extract_diffs called with default_strip_count " . a:default_strip_count)
   " Sets g:patches = {'fail':'', 'patch':[
   " {
   "  'filename': filepath
@@ -431,11 +432,12 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
   "
   let l:collect = []
   let l:line_num = 0
+  let l:p_first_file = ''
   let l:linescount = len(a:lines)
   call s:state('START')
   while l:line_num < l:linescount
     let l:line = a:lines[l:line_num]
-    " call s:me.debug(l:line)
+    call s:me.debug('|' . l:line . '|')
     let l:line_num += 1
     if l:line =~ '^#'
       continue
@@ -497,7 +499,7 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
           let l:filepath = l:p_second_file
         endif
       endif
-      " call s:me.debug('l:p_type ' . l:p_type)
+      call s:me.debug('l:p_type ' . l:p_type)
       call s:me.progress('Collecting ' . l:filepath)
       call s:state('EXPECT_15_STARS')
       let l:collect += [l:line]
@@ -526,8 +528,8 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
       if l:line !~ '^[ !+-] .*$'
         let l:mat = matchlist(l:line, '^--- \(\d\+\),\(\d\+\) ----$')
         if ! empty(l:mat) && l:mat[1] != '' && l:mat[2] != ''
-          let goal_count = l:mat[2] - l:mat[1] + 1
-          let c_count = 0
+          let l:goal_count = l:mat[2] - l:mat[1] + 1
+          let l:c_count = 0
           call s:state('READ_CONTEXT_CHUNK')
           let l:collect += [l:line]
           continue
@@ -540,8 +542,8 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
       continue
       " }}}
     elseif s:state() == 'READ_CONTEXT_CHUNK' " {{{
-      let c_count += 1
-      if c_count == goal_count
+      let l:c_count += 1
+      if l:c_count == l:goal_count
         let l:collect += [l:line]
         call s:state('BACKSLASH_OR_CRANGE_EOF')
         continue
@@ -670,6 +672,7 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
           let l:o_count = 0
           let l:n_count = 0
           let l:collect += [l:line]
+          call s:me.debug("Will collect another unified chunk")
           continue
         endif
         let l:this_patch = {'filename': l:filepath, 'type': l:p_type, 'content': l:collect}
@@ -710,7 +713,7 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
   "call s:me.buflog(s:state())
   if (
         \ (s:state() == 'READ_CONTEXT_CHUNK'
-        \  && c_count == goal_count
+        \  && l:c_count == l:goal_count
         \ ) ||
         \ (s:state() == 'READ_UNIFIED_CHUNK'
         \  && l:n_count == l:new_goal_count
@@ -815,7 +818,7 @@ function! s:wiggle(out, rej) " {{{
   endif
   let l:wiggle_out = s:temp_name()
   let v:errmsg = ''
-  let l:cout = system('wiggle --merge ' . shellescape(a:out) . ' ' . shellescape(a:rej) . ' > ' . shellescape(l:wiggle_out))
+  call system('wiggle --merge ' . shellescape(a:out) . ' ' . shellescape(a:rej) . ' > ' . shellescape(l:wiggle_out))
   if v:errmsg != '' || v:shell_error
     call s:me.buflog('ERROR: wiggle was not completely successful.')
     if v:errmsg != ''
@@ -853,7 +856,7 @@ function! s:generic_review(argslist)                                   "{{{
   "   arg3 = strip count
 
   " VIM 7+ required
-  if version < 700
+  if v:version < 700
     call s:me.buflog('This plugin needs VIM 7 or higher')
     return
   endif
@@ -919,6 +922,7 @@ function! s:generic_review(argslist)                                   "{{{
     let l:strip_count = eval(a:argslist[1])
   else
     call s:me.buflog('Fatal internal error in patchreview.vim plugin')
+    return
   endif " diff
 
   " Verify that patch command and temporary directory are available or specified
@@ -934,6 +938,7 @@ function! s:generic_review(argslist)                                   "{{{
     let l:defsc = 0
   else
     call s:me.buflog('Fatal internal error in patchreview.vim plugin')
+    return
   endif
   try
     call patchreview#extract_diffs(l:patchlines, l:defsc)
@@ -992,12 +997,15 @@ function! s:generic_review(argslist)                                   "{{{
       elseif s:reviewmode == 'diff'
         let l:msgtype = 'Removed file    : '
       endif
+    else
+      call s:me.buflog('Fatal internal error in patchreview.vim plugin')
+      return
     endif
     let l:bufnum = bufnr(l:relpath)
     if buflisted(l:bufnum) && getbufvar(l:bufnum, '&mod')
       call s:me.buflog('Old buffer for file [' . l:relpath . '] exists in modified state. Skipping review.')
-      continue
       unlet! patch
+      continue
     endif
     let l:tmp_patch = s:temp_name()
     let l:tmp_patched = s:temp_name()
@@ -1068,7 +1076,7 @@ function! s:generic_review(argslist)                                   "{{{
           if l:pout != ''
             call s:me.buflog('ERROR: ' . l:pout)
           endif
-          call s:me.buflog('ERROR: ' . v:errmsg)
+          call s:me.buflog('ERROR: ' . l:errmsg)
           if filereadable(l:tmp_patched)
             call s:me.buflog('ERROR: Diff partially shown.')
           else
@@ -1091,7 +1099,6 @@ function! s:generic_review(argslist)                                   "{{{
           wincmd p
         endif
       "endif
-      let l:winnum = winnr()
       if ! error || filereadable(l:tmp_patched)
         let l:filetype = &filetype
         if exists('l:patchcmd')

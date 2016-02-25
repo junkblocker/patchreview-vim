@@ -19,11 +19,11 @@ CONTENTS                                               *PatchReview* *DiffReview
      3.2 PatchReview Usage............................: |:PatchReview|
      3.3 ReversePatchReview Usage.....................: |:ReversePatchReview|
   4. PatchReview options..............................: |patchreview-options|
-     4.1 Optional path to the 'patch' binary..........: |patchreview_patch|
+     4.1 Optional path to the "patch" binary..........: |patchreview_patch|
      4.2 Dealing with DOS line endings................: |patchreview_patch_needs_crlf|
      4.3 Vertical split direction control.............: |patchreview_split_right|
      4.4 Hide/show generated .rej files...............: |patchreview_unified_rejects|
-     4.5 Optional path to 'wiggle' binary.............: |patchreview_wiggle|
+     4.5 Optional path to "wiggle" binary.............: |patchreview_wiggle|
   5. Hooks............................................: |patchreview-hooks|
   6. Adding new version control plugins...............: |patchreview-plugins|
 
