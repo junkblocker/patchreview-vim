@@ -109,6 +109,8 @@ let s:vsplit = get(g:, 'patchreview_split_right', 0)
       \ ? 'vertical rightbelow'
       \ : 'vertical leftabove'
 
+let s:disable_syntax = get(g:, 'patchreview_disable_syntax', 1)
+
 let s:modules = {}
 " }}}
 " Functions {{{
@@ -433,6 +435,14 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
   let l:collect = []
   let l:line_num = 0
   let l:p_first_file = ''
+  let l:o_count = -1
+  let l:n_count = -1
+  let l:c_count = -1
+  let l:goal_count = -1
+  let l:old_goal_count = -1
+  let l:new_goal_count = -1
+  let l:p_type = ''
+  let l:filepath = ''
   let l:linescount = len(a:lines)
   call s:state('START')
   while l:line_num < l:linescount
@@ -831,7 +841,9 @@ function! s:wiggle(out, rej) " {{{
     let &modeline=0
     silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:wiggle_out)
     setlocal noswapfile
-    setlocal syntax=none
+    if s:disable_syntax
+      setlocal syntax=none
+    endif
     setlocal bufhidden=delete
     setlocal nobuflisted
     setlocal modifiable
@@ -1107,7 +1119,9 @@ function! s:generic_review(argslist)                                   "{{{
           let &modeline=0
           silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
           setlocal noswapfile
-          setlocal syntax=none
+          if s:disable_syntax
+            setlocal syntax=none
+          endif
           setlocal bufhidden=delete
           setlocal nobuflisted
           setlocal modifiable
@@ -1137,7 +1151,9 @@ function! s:generic_review(argslist)                                   "{{{
         let &modeline=0
         silent! exe 'topleft split ' . fnameescape(l:tmp_patch)
         setlocal noswapfile
-        setlocal syntax=none
+        if s:disable_syntax
+          setlocal syntax=none
+        endif
         setlocal bufhidden=delete
         setlocal nobuflisted
         setlocal modifiable
@@ -1178,7 +1194,9 @@ function! s:generic_review(argslist)                                   "{{{
           endif
         endif
         setlocal noswapfile
-        setlocal syntax=none
+        if s:disable_syntax
+          setlocal syntax=none
+        endif
         setlocal bufhidden=delete
         setlocal nobuflisted
         setlocal modifiable

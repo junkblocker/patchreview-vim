@@ -108,12 +108,23 @@ PatchReview Options                                     *patchreview-options*
 
 The following variables are available:
 
+|patchreview_disable_syntax|
 |patchreview_patch|
 |patchreview_patch_needs_crlf|
 |patchreview_split_right|
 |patchreview_unified_rejects|
 |patchreview_wiggle|
 
+                                                *g:patchreview_disable_syntax*
+                                                  *patchreview_disable_syntax*
+  g:patchreview_disable_syntax = {0|1}
+      Optional flag to disable or not disable syntax highlighting in diff buffers.
+      If the value is 0, syntax highlighting is left untouched.
+      Default is 1 for speed.
+
+    Example: >
+           let g:patchreview_disable_syntax = 0
+<
 
                                                         *g:patchreview_patch*
                                                           *patchreview_patch*
