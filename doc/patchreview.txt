@@ -210,15 +210,23 @@ The following hook functions are available:
 
       For example, the following shows a way to use this to
 
-      1. create a way to get notifications when a long review finishes on a
-         Mac OS X machine.
+      1. create an audio notifications when a long review finishes on a Linux
+         or Mac OS X machine.
       2. open the original patch file too when review is completed. >
 
       function NotifyAndOpenOriginalPatchfile(review_kind, ...)
-          system('say ' . fnameescape(a:review_kind) . ' completed.')
+          if executable('espeak') && executable('aplay')
+              call system('espeak --stdout '
+                  \ . shellescape(a:review_kind . ' completed. ')
+                  \ . ' | aplay > /dev/null 2>&1')
+          elseif executable('say')
+              call system('say ' . fnameescape(a:review_kind) . ' completed.')
+          endif
           if a:review_kind =~ 'Patch' && filereadable(a:1)
-              wincmd n
-              exe ":e " . fnameescape(a:1)
+            if expand('%') != '' || line('$') != 1 || getline(1) != '' || &modified
+                wincmd n
+            endif
+            exe 'e ' . fnameescape(a:1)
           endif
       endfunction
       let g:patchreview_postfunc = 'NotifyAndOpenOriginalPatchfile'
