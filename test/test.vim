@@ -2,7 +2,6 @@
 set nocompatible
 
 " Uses thinca/vim-prettyprint to dump information if available.
-
 function! s:dump(something)
   if exists(":PP")
     echomsg PP(a:something)
@@ -13,7 +12,12 @@ unlet! s:mess
 redir => s:mess
 try
   exe 'set runtimepath=' . expand("%:p:h")
-  exe 'set runtimepath+=' . expand("~/.vim/bundle/prettyprint")
+  for names in ['bundles', 'bundle']
+    let s:bpath = expand("~/.vim/bundle/prettyprint")
+    if isdirectory(s:bpath)
+      exe 'set runtimepath+=' . s:bpath
+    endif
+  endfor
 
   set verbose=1
   runtime plugin/patchreview.vim
