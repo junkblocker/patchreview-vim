@@ -55,38 +55,38 @@ Option 1: Use a bundle manager
 ------------------------------
 
 Use your favorite vim package manager to install from the github repository for
-the project.
-
-Example 1: Installation with NeoBundle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+the project. Examples:
 
 .. code:: vim
 
+   " With vim-plug
+   Plug 'junkblocker/patchreview-vim'
+
+   " With NeoBundle
    NeoBundle 'junkblocker/patchreview-vim'
 
+   " With dein.vim
+   call dein#add('junkblocker/patchreview-vim')
 
-Example 2: Installation with vundle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: vim
-
+   " With Vundle  
    Bundle 'junkblocker/patchreview-vim'
 
 
-Example 3: Installation with Pathogen
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Option 2: Installation with Pathogen
+------------------------------------
 
 .. code:: sh
 
    % cd ~/.vim/bundle
    % git clone https://github.com/junkblocker/patchreview-vim
 
-Option 2: Install by hand
+
+Option 3: Install by hand
 -------------------------
 
-1) Extract the zip in your ``$HOME/.vim`` or ``$VIM/vimfiles`` directory and
-   restart vim. The  directory location relevant to your platform can be seen
-   by running:
+1) Extract the zip from http://www.vim.org/scripts/script.php?script_id=1563
+   in your ``$HOME/.vim`` or ``$VIM/vimfiles`` directory and restart vim. The
+   directory location relevant to your platform can be seen by running:
 
    .. code:: vim
 
@@ -151,11 +151,13 @@ Usage
 
   for usage details.
 
+
 Limitations
 ===========
 
 The plugin can not handle diffs/patches which change the line ending types between DOS, UNIX and Mac etc.
 This is a general patching problem and is not specific to this plugin.
+
 
 Fork me
 =======
