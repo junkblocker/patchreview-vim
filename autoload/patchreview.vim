@@ -338,7 +338,7 @@ function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
   let s:guess_strip[a:default_strip] += 1
 endfunction
 " }}}
-function s:is_bsd() " {{{
+function! s:is_bsd() " {{{
   return filereadable('/etc/rc.subr')
 endfunction
 " }}}
