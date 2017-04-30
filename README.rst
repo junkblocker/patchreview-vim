@@ -68,7 +68,7 @@ the project. Examples:
    " With dein.vim
    call dein#add('junkblocker/patchreview-vim')
 
-   " With Vundle  
+   " With Vundle
    Bundle 'junkblocker/patchreview-vim'
 
 
@@ -155,8 +155,9 @@ Usage
 Limitations
 ===========
 
-The plugin can not handle diffs/patches which change the line ending types between DOS, UNIX and Mac etc.
-This is a general patching problem and is not specific to this plugin.
+The plugin can not handle diffs/patches which change the line ending types
+between DOS, UNIX and Mac etc. This is a general patching problem and is not
+specific to this plugin.
 
 
 Fork me
