@@ -1,8 +1,8 @@
 *patchreview.txt* Vim global plugin for doing single, multi-patch or diff code reviews
-                    Version 1.2.1 (for Vim version 7.0 or higher)
+                    Version 1.3.0 (for Vim version 7.0 or higher)
 
                 Author: Manpreet Singh < junkblocker@yahoo.com >
-                   Copyright (C) 2006-2016 by Manpreet Singh
+                   Copyright (C) 2006-2017 by Manpreet Singh
               License : This file is placed in the public domain.
             No warranties express or implied. Use at your own risk.
 
@@ -109,6 +109,7 @@ PatchReview Options                                     *patchreview-options*
 The following variables are available:
 
 |patchreview_disable_syntax|
+|patchreview_foldlevel|
 |patchreview_patch|
 |patchreview_patch_needs_crlf|
 |patchreview_split_right|
@@ -124,6 +125,17 @@ The following variables are available:
 
     Example: >
            let g:patchreview_disable_syntax = 0
+<
+
+                                                     *g:patchreview_foldlevel*
+                                                       *patchreview_foldlevel*
+  g:patchreview_foldlevel = {number}
+      Optional flag to control the foldlevel of the generated windows independent
+      of any filetype or other foldlevel settings.
+      Default is 0 for Vim's usual behavior.
+
+    Example: >
+           let g:patchreview_disable_syntax = 20    " Almost disable folding
 <
 
                                                         *g:patchreview_patch*

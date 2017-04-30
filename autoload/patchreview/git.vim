@@ -1,5 +1,6 @@
 " Author        : Manpreet Singh < junkblocker@yahoo.com >    " {{{
-" Copyright     : 2006-2016 by Manpreet Singh
+" Copyright     : 2006-2017 by Manpreet Singh
+" Version       : 1.3.0
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 " Initialization {{{
