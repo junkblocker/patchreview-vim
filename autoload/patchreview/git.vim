@@ -8,7 +8,7 @@ let s:driver = {}
 let s:git = {}
 " }}}
 function! s:git.detect() " {{{
-  return isdirectory('.git')
+  return isdirectory('.git') || filereadable('.git')
 endfunction
 " }}}
 function! s:git.get_diff() " {{{
