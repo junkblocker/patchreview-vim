@@ -3,12 +3,13 @@
 
 " Version       : 1.3.0                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2017 by Manpreet Singh
+" Copyright     : 2006-2018 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
 "
+"   W.I.P. - Undo the noautocmd addition it breaks people's expectations
 "   1.3.0 - Added g:patchreview_foldlevel setting
 "         - Added g:patchreview_disable_syntax control syntax highlighting
 "         - Prevent most autocmds from executing during plugin execution
@@ -239,18 +240,18 @@ function! s:wipe_message_buffer()                                            "{{
   let l:cur_tabnr = tabpagenr()
   let l:cur_winnr = winnr()
   if exists('s:origtabpagenr')
-    noautocmd exe 'tabnext ' . s:origtabpagenr
+    exe 'tabnext ' . s:origtabpagenr
   endif
   let l:winnum = bufwinnr(s:msgbufname)
   if l:winnum != -1 " If the window is already open, jump to it
     if winnr() != l:winnum
-      noautocmd exe l:winnum . 'wincmd w'
+      exe l:winnum . 'wincmd w'
       bw
     endif
   endif
-  noautocmd exe 'tabnext ' . l:cur_tabnr
+  exe 'tabnext ' . l:cur_tabnr
   if winnr() != l:cur_winnr
-    noautocmd exe l:cur_winnr . 'wincmd w'
+    exe l:cur_winnr . 'wincmd w'
   endif
 endfunction
 "}}}
@@ -261,7 +262,7 @@ function! s:me.buflog(...)                                                   "{{
   let l:cur_tabnr = tabpagenr()
   let l:cur_winnr = winnr()
   if exists('s:msgbuftabnr')
-    noautocmd exe 'tabnext ' . s:msgbuftabnr
+    exe 'tabnext ' . s:msgbuftabnr
   else
     let s:msgbuftabnr = tabpagenr()
   endif
@@ -272,12 +273,12 @@ function! s:me.buflog(...)                                                   "{{
   let l:winnum = bufwinnr(s:msgbufname)
   if l:winnum != -1 " If the window is already open, jump to it
     if winnr() != l:winnum
-      noautocmd exe l:winnum . 'wincmd w'
+      exe l:winnum . 'wincmd w'
     endif
   else
     let l:bufnum = bufnr(s:msgbufname)
     let l:wcmd = l:bufnum == -1 ? s:msgbufname : '+buffer' . l:bufnum
-    noautocmd exe 'silent! botright 5split ' . l:wcmd
+    exe 'silent! botright 5split ' . l:wcmd
     let s:msgbuftabnr = tabpagenr()
     setlocal buftype=nofile
     setlocal bufhidden=delete
@@ -297,11 +298,11 @@ function! s:me.buflog(...)                                                   "{{
   endif
   normal! G
   setlocal nomodifiable
-  noautocmd exe l:msgtab_orgwinnr . 'wincmd w'
+  exe l:msgtab_orgwinnr . 'wincmd w'
   if a:0 == 1 ||  a:0 > 1 && a:2 != 0
-    noautocmd exe ':tabnext ' . l:cur_tabnr
+    exe ':tabnext ' . l:cur_tabnr
     if l:cur_winnr != -1 && winnr() != l:cur_winnr
-      noautocmd exe l:cur_winnr . 'wincmd w'
+      exe l:cur_winnr . 'wincmd w'
     endif
   endif
 endfunction
@@ -851,7 +852,7 @@ function! s:wiggle(out, rej) " {{{
     " modelines in loaded files mess with diff comparison
     let s:keep_modeline=&modeline
     let &modeline=0
-    noautocmd silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:wiggle_out)
+    silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:wiggle_out)
     setlocal noswapfile
     if s:disable_syntax
       setlocal syntax=none
@@ -869,7 +870,7 @@ function! s:wiggle(out, rej) " {{{
     if has('folding')
       let &foldlevel=s:foldlevel
     endif
-    noautocmd wincmd p
+    wincmd p
   endif
 endfunction
 " }}}
@@ -1114,16 +1115,16 @@ function! s:generic_review(argslist)                                   "{{{
       "if expand('%') == '' && line('$') == 1 && getline(1) == '' && ! &modified && ! &diff
         "silent! exe 'edit ' . l:stripped_rel_path
       "else
-        noautocmd silent! exe 'tabedit ' . fnameescape(l:stripped_rel_path)
+        silent! exe 'tabedit ' . fnameescape(l:stripped_rel_path)
         if filereadable(l:tmp_patched) && l:pout =~ 'Only garbage was found in the patch input'
           topleft new
-          noautocmd exe 'r ' . fnameescape(l:tmp_patch)
+          exe 'r ' . fnameescape(l:tmp_patch)
           normal! gg
           0 delete _
           exe 'file bad_patch_for_' . fnameescape(fnamemodify(l:inputfile, ':t'))
           setlocal nomodifiable nomodified ft=diff bufhidden=delete
                 \ buftype=nofile noswapfile nowrap nobuflisted
-          noautocmd wincmd p
+          wincmd p
         endif
       "endif
       if ! error || filereadable(l:tmp_patched)
@@ -1132,7 +1133,7 @@ function! s:generic_review(argslist)                                   "{{{
           " modelines in loaded files mess with diff comparison
           let s:keep_modeline=&modeline
           let &modeline=0
-          noautocmd silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
+          silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
           setlocal noswapfile
           if s:disable_syntax
             setlocal syntax=none
@@ -1151,16 +1152,16 @@ function! s:generic_review(argslist)                                   "{{{
           if has('folding')
             let &foldlevel=s:foldlevel
           endif
-          noautocmd wincmd p
+          wincmd p
           let &modeline=s:keep_modeline
         else
-          noautocmd silent! exe s:vsplit . ' new'
+          silent! exe s:vsplit . ' new'
           let &filetype = l:filetype
           let &fdm = 'diff'
           if has('folding')
             let &foldlevel=s:foldlevel
           endif
-          noautocmd wincmd p
+          wincmd p
         endif
       endif
       if ! filereadable(l:stripped_rel_path)
@@ -1168,7 +1169,7 @@ function! s:generic_review(argslist)                                   "{{{
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
-        noautocmd silent! exe 'topleft split ' . fnameescape(l:tmp_patch)
+        silent! exe 'topleft split ' . fnameescape(l:tmp_patch)
         setlocal noswapfile
         if s:disable_syntax
           setlocal syntax=none
@@ -1185,14 +1186,14 @@ function! s:generic_review(argslist)                                   "{{{
         if has('folding')
           let &foldlevel=s:foldlevel
         endif
-        noautocmd wincmd p
+        wincmd p
         let &modeline=s:keep_modeline
       endif
       if filereadable(l:tmp_patched_rej)
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
-        noautocmd silent! exe 'topleft split ' . fnameescape(l:tmp_patched_rej)
+        silent! exe 'topleft split ' . fnameescape(l:tmp_patched_rej)
         " Try to convert rejects to unified format unless explicitly disabled
         if (! exists('g:patchreview_unified_rejects') || g:patchreview_unified_rejects == 1) &&
               \ getline(1) =~ '\m\*\{15}'
@@ -1231,7 +1232,7 @@ function! s:generic_review(argslist)                                   "{{{
         if has('folding')
           let &foldlevel=s:foldlevel
         endif
-        noautocmd wincmd p
+        wincmd p
         let &modeline=s:keep_modeline
         call s:me.buflog(l:msgtype . '*** REJECTED *** ' . l:relpath)
         call s:wiggle(l:tmp_patched, l:tmp_patched_rej)
