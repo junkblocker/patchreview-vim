@@ -3,7 +3,7 @@
 " vim.org:  http://www.vim.org/scripts/script.php?script_id=1563
 " Version       : 1.3.0 " {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2017 by Manpreet Singh
+" Copyright     : 2006-2020 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
