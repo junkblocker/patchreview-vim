@@ -353,7 +353,6 @@ function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
   let i = 0
   while i <= 15
     if len(l:path) >= i
-      let l:checkdir = join(['.'] + l:path[i : ], l:splitchar)
       if l:checkdir == '.'
         break
       endif
