@@ -3,15 +3,13 @@
 
 " Version       : 1.3.0                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2020 by Manpreet Singh
+" Copyright     : 2006-2018 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
 "
 "   W.I.P. - Undo the noautocmd addition it breaks people's expectations
-"         - Better strip level guessing
-"         - Miscellaneous accumulated fixes
 "   1.3.0 - Added g:patchreview_foldlevel setting
 "         - Added g:patchreview_disable_syntax control syntax highlighting
 "         - Prevent most autocmds from executing during plugin execution
@@ -344,21 +342,6 @@ function! s:guess_prefix_strip_value(diff_file_path, default_strip) " {{{
       if filereadable(join(['.'] + l:path[i : ], l:splitchar))
         let s:guess_strip[i] += 1
         call s:me.debug("Guessing strip: " . i)
-        return
-      endif
-    endif
-    let i = i + 1
-  endwhile
-  let l:path = split(a:diff_file_path, l:splitchar)[:-2]
-  let i = 0
-  while i <= 15
-    if len(l:path) >= i
-      if l:checkdir == '.'
-        break
-      endif
-      if isdirectory(l:checkdir)
-        let s:guess_strip[i] += 1
-        call s:me.debug("Guessing strip via directory check : " . i)
         return
       endif
     endif
@@ -782,7 +765,7 @@ function! patchreview#patchreview(...)                                     "{{{
 
     " When opening files which may be open elsewhere, open them in read only
     " mode
-    au SwapExists * :let v:swapchoice='o' | augroup! patchreview_plugin
+    au SwapExists * :let v:swapchoice='o'
   augroup end
   let s:save_shortmess = &shortmess
   let s:save_aw = &autowrite
@@ -806,6 +789,7 @@ function! patchreview#patchreview(...)                                     "{{{
   let &autowriteall = s:save_awa
   let &autowrite = s:save_aw
   let &shortmess = s:save_shortmess
+  augroup! patchreview_plugin
   if exists('g:patchreview_postfunc')
     call call(g:patchreview_postfunc, l:callback_args)
   endif
@@ -821,7 +805,7 @@ function! patchreview#reverse_patchreview(...)  "{{{
 
     " When opening files which may be open elsewhere, open them in read only
     " mode
-    au SwapExists * :let v:swapchoice='o' | augroup! patchreview_plugin
+    au SwapExists * :let v:swapchoice='o'
   augroup end
   let s:save_shortmess = &shortmess
   let s:save_aw = &autowrite
@@ -845,6 +829,7 @@ function! patchreview#reverse_patchreview(...)  "{{{
   let &autowriteall = s:save_awa
   let &autowrite = s:save_aw
   let &shortmess = s:save_shortmess
+  augroup! patchreview_plugin
   if exists('g:patchreview_postfunc')
     call call(g:patchreview_postfunc, l:callback_args)
   endif
@@ -912,7 +897,6 @@ function! s:generic_review(argslist)                                   "{{{
 
   let l:filterdiff_warned = 0
 
-  call s:me.debug("Reviewmode: " . s:reviewmode)
   if s:reviewmode == 'diff' || s:reviewmode == 'rpatch'
     let patch_R_options = ['-t', '-R']
   elseif s:reviewmode == 'patch'
@@ -1007,7 +991,6 @@ function! s:generic_review(argslist)                                   "{{{
   for patch in g:patches['patch']
     let l:this_patch_num += 1
     call s:me.progress('Processing ' . l:this_patch_num . '/' . l:total_patches . ' ' . patch.filename)
-    call s:me.buflog("Review mode: : " . s:reviewmode . " Patch type: " . patch.type)
     if patch.type !~ '^[!+-]$'
       call s:me.buflog('*** Skipping review generation due to unknown change [' . patch.type . ']')
       unlet! patch
@@ -1046,7 +1029,6 @@ function! s:generic_review(argslist)                                   "{{{
       call s:me.buflog('Fatal internal error in patchreview.vim plugin')
       return
     endif
-    call s:me.buflog(l:msgtype . ' ' . l:relpath)
     let l:bufnum = bufnr(l:relpath)
     if buflisted(l:bufnum) && getbufvar(l:bufnum, '&mod')
       call s:me.buflog('Old buffer for file [' . l:relpath . '] exists in modified state. Skipping review.')
@@ -1082,18 +1064,11 @@ function! s:generic_review(argslist)                                   "{{{
                 \ "shellescape(v:val)"), ' ') . ' < '
                 \ . shellescape(l:tmp_patch)
         else
-          if patch.type == '+'
-            let l:patchcmd = g:patchreview_patch . ' '
-                  \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
-                  \ + patch_R_options, "shellescape(v:val)"), ' ') . ' < '
-                  \ . shellescape(l:tmp_patch)
-          else
-            let l:patchcmd = g:patchreview_patch . ' '
-                  \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
-                  \ + patch_R_options + [l:inputfile],
-                  \ "shellescape(v:val)"), ' ') . ' < '
-                  \ . shellescape(l:tmp_patch)
-          endif
+          let l:patchcmd = g:patchreview_patch . ' '
+                \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
+                \ + patch_R_options + [l:inputfile],
+                \ "shellescape(v:val)"), ' ') . ' < '
+                \ . shellescape(l:tmp_patch)
         endif
       elseif patch.type == '+' && s:reviewmode == 'diff'
         let l:inputfile = ''
@@ -1158,11 +1133,7 @@ function! s:generic_review(argslist)                                   "{{{
           " modelines in loaded files mess with diff comparison
           let s:keep_modeline=&modeline
           let &modeline=0
-          if patch.type == '+'
-            silent! exe s:vsplit . ' diffsplit /dev/null'
-          else
-            silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
-          endif
+          silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
           setlocal noswapfile
           if s:disable_syntax
             setlocal syntax=none
@@ -1194,9 +1165,7 @@ function! s:generic_review(argslist)                                   "{{{
         endif
       endif
       if ! filereadable(l:stripped_rel_path)
-        if patch.type != '-'
-          call s:me.buflog('ERROR: Original file ' . l:stripped_rel_path . ' does not exist.')
-        endif
+        call s:me.buflog('ERROR: Original file ' . l:stripped_rel_path . ' does not exist.')
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
@@ -1267,6 +1236,8 @@ function! s:generic_review(argslist)                                   "{{{
         let &modeline=s:keep_modeline
         call s:me.buflog(l:msgtype . '*** REJECTED *** ' . l:relpath)
         call s:wiggle(l:tmp_patched, l:tmp_patched_rej)
+      else
+        call s:me.buflog(l:msgtype . ' ' . l:relpath)
       endif
     finally
       if ! exists('g:patchreview_persist')
@@ -1292,7 +1263,7 @@ function! patchreview#diff_review(...) " {{{
 
     " When opening files which may be open elsewhere, open them in read only
     " mode
-    au SwapExists * :let v:swapchoice='o' | augroup! patchreview_plugin
+    au SwapExists * :let v:swapchoice='o'
   augroup end
 
   let s:save_shortmess = &shortmess
@@ -1366,6 +1337,7 @@ function! patchreview#diff_review(...) " {{{
     let &autowriteall = s:save_awa
     let &autowrite = s:save_aw
     let &shortmess = s:save_shortmess
+    augroup! patchreview_plugin
   endtry
   if exists('g:patchreview_postfunc')
     call call(g:patchreview_postfunc, l:callback_args)
