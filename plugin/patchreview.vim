@@ -1,9 +1,9 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:     https://github.com/junkblocker/patchreview-vim
 " vim.org:  http://www.vim.org/scripts/script.php?script_id=1563
-" Version       : 1.3.0 " {{{
+" Version       : 2.0.0 " {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2017 by Manpreet Singh
+" Copyright     : 2006-2020 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
@@ -40,7 +40,7 @@
 if &cp || ((! exists('g:patchreview_debug') || g:patchreview_debug == 0) && exists('g:loaded_patchreview'))
   finish
 endif
-let g:loaded_patchreview="1.3.0"
+let g:loaded_patchreview="2.0.0"
 if v:version < 700
   echomsg 'patchreview: You need at least Vim 7.0'
   finish
@@ -50,19 +50,40 @@ if ! has('diff')
   finish
 endif
 " }}}
+function! <SID>wrap_event_ignore(f, persist, ...)
+  let l:syn = exists("syntax_on") || exists("syntax_manual")
+  try
+    let l:eventignore = &eventignore
+    if get(g:, 'patchreview_ignore_events', 1)
+      set eventignore=all
+    endif
+    if a:persist
+      let g:patchreview_persist = 1
+    else
+      unlet! g:patchreview_persist
+    endif
+    let l:call_args = [] + deepcopy(a:000)
+    call call(a:f, l:call_args)
+  finally
+    let &eventignore=l:eventignore
+    if l:syn
+      syn on
+    endif
+  endtry
+endfunction
 " End user commands                                                         "{{{
 "============================================================================
 " :PatchReview
-command! -nargs=+ -complete=file PatchReview        unlet! g:patchreview_persist | call patchreview#patchreview (<f-args>)
-command! -nargs=+ -complete=file PatchReviewPersist let g:patchreview_persist=1  | call patchreview#patchreview (<f-args>)
+command! -nargs=+ -complete=file PatchReview        call s:wrap_event_ignore('patchreview#patchreview', 0, <f-args>)
+command! -nargs=+ -complete=file PatchReviewPersist call s:wrap_event_ignore('patchreview#patchreview', 1, <f-args>)
 
 " :ReversePatchReview
-command! -nargs=+ -complete=file ReversePatchReview        unlet! g:patchreview_persist | call patchreview#reverse_patchreview (<f-args>)
-command! -nargs=+ -complete=file ReversePatchReviewPersist let g:patchreview_persist=1  | call patchreview#reverse_patchreview (<f-args>)
+command! -nargs=+ -complete=file ReversePatchReview        call s:wrap_event_ignore('patchreview#reverse_patchreview', 0, <f-args>)
+command! -nargs=+ -complete=file ReversePatchReviewPersist call s:wrap_event_ignore('patchreview#reverse_patchreview', 1, <f-args>)
 
 " :DiffReview
-command! -nargs=* -complete=file DiffReview        unlet! g:patchreview_persist | call patchreview#diff_review(<f-args>)
-command! -nargs=* -complete=file DiffReviewPersist let g:patchreview_persist=1  | call patchreview#diff_review(<f-args>)
+command! -nargs=* -complete=file DiffReview        call s:wrap_event_ignore('patchreview#diff_review', 0, <f-args>)
+command! -nargs=* -complete=file DiffReviewPersist call s:wrap_event_ignore('patchreview#diff_review', 1, <f-args>)
 "}}}
 " vim: set et fdl=1 fdm=marker fenc= ff=unix ft=vim sw=2 sts=0 ts=2 tw=79 nowrap :
 "}}}

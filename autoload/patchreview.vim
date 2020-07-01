@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 1.3.0                                                     {{{
+" Version       : 2.0.0                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2020 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -9,7 +9,8 @@
 "
 " Changelog : {{{
 "
-"   W.I.P. - Undo the noautocmd addition it breaks people's expectations
+"   2.0.0 - Allow keeping autocmds enabled during processing with the
+"           g:patchreview_ignore_events flag
 "         - Better strip level guessing
 "         - Miscellaneous accumulated fixes
 "   1.3.0 - Added g:patchreview_foldlevel setting
@@ -129,6 +130,11 @@ let s:foldlevel = get(g:, 'patchreview_foldlevel', 0)
 let s:modules = {}
 " }}}
 " Functions {{{
+let s:_executable = {}
+function! s:executable(expr) abort
+    let s:_executable[a:expr] = get(s:_executable, a:expr, executable(a:expr))
+    return s:_executable[a:expr]
+endfunction
 " String display width utilities {{{
 " The string display width functions were imported from vital.vim
 " https://github.com/vim-jp/vital.vim (Public Domain)
@@ -302,7 +308,7 @@ function! s:me.buflog(...)                                                   "{{
   setlocal nomodifiable
   exe l:msgtab_orgwinnr . 'wincmd w'
   if a:0 == 1 ||  a:0 > 1 && a:2 != 0
-    exe ':tabnext ' . l:cur_tabnr
+    exe 'tabnext ' . l:cur_tabnr
     if l:cur_winnr != -1 && winnr() != l:cur_winnr
       exe l:cur_winnr . 'wincmd w'
     endif
@@ -312,7 +318,7 @@ endfunction
 function! s:check_binary(binary_name)                                 "{{{
   " Verify that binary_name is specified or available
   if ! exists('g:patchreview_' . a:binary_name)
-    if executable(a:binary_name)
+    if s:executable(a:binary_name)
       let g:patchreview_{a:binary_name} = a:binary_name
       return 1
     else
@@ -320,7 +326,7 @@ function! s:check_binary(binary_name)                                 "{{{
       call s:me.buflog('Please define it in your .vimrc.')
       return 0
     endif
-  elseif ! executable(g:patchreview_{a:binary_name})
+  elseif ! s:executable(g:patchreview_{a:binary_name})
     call s:me.buflog('Specified g:patchreview_' . a:binary_name . ' [' . g:patchreview_{a:binary_name} . '] is not executable.')
     return 0
   else
@@ -854,7 +860,7 @@ function! patchreview#reverse_patchreview(...)  "{{{
 endfunction
 "}}}
 function! s:wiggle(out, rej) " {{{
-  if ! executable('wiggle')
+  if ! s:executable('wiggle')
     return
   endif
   let l:wiggle_out = s:temp_name()
@@ -870,10 +876,17 @@ function! s:wiggle(out, rej) " {{{
     " modelines in loaded files mess with diff comparison
     let s:keep_modeline=&modeline
     let &modeline=0
+    if s:disable_syntax
+      syn off
+    else
+      syn enable
+    endif
     silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:wiggle_out)
     setlocal noswapfile
     if s:disable_syntax
-      setlocal syntax=none
+      syn off
+    else
+      syn enable
     endif
     setlocal bufhidden=delete
     setlocal nobuflisted
@@ -1072,7 +1085,7 @@ function! s:generic_review(argslist)                                   "{{{
         continue
       endif
       "if exists('g:patchreview_debug')
-      "  exe ':tabedit ' . l:tmp_patch
+      "  exe 'tabedit ' . l:tmp_patch
       "endif
       if patch.type == '+' && s:reviewmode =~ 'patch'
         let l:inputfile = ''
@@ -1161,6 +1174,11 @@ function! s:generic_review(argslist)                                   "{{{
           " modelines in loaded files mess with diff comparison
           let s:keep_modeline=&modeline
           let &modeline=0
+          if s:disable_syntax
+            syn off
+          else
+            syn enable
+          endif
           if patch.type == '+'
             silent! exe s:vsplit . ' diffsplit /dev/null'
           else
@@ -1168,7 +1186,9 @@ function! s:generic_review(argslist)                                   "{{{
           endif
           setlocal noswapfile
           if s:disable_syntax
-            setlocal syntax=none
+            syn off
+          else
+            syn enable
           endif
           setlocal bufhidden=delete
           setlocal nobuflisted
@@ -1187,6 +1207,11 @@ function! s:generic_review(argslist)                                   "{{{
           wincmd p
           let &modeline=s:keep_modeline
         else
+          if s:disable_syntax
+            syn off
+          else
+            syn enable
+          endif
           silent! exe s:vsplit . ' new'
           let &filetype = l:filetype
           let &fdm = 'diff'
@@ -1203,10 +1228,17 @@ function! s:generic_review(argslist)                                   "{{{
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
-        silent! exe 'topleft split ' . fnameescape(l:tmp_patch)
+        if s:disable_syntax
+          syn off
+        else
+          syn enable
+        endif
+        silent! exe s:noautocmd . 'topleft split ' . fnameescape(l:tmp_patch)
         setlocal noswapfile
         if s:disable_syntax
-          setlocal syntax=none
+          syn off
+        else
+          syn enable
         endif
         setlocal bufhidden=delete
         setlocal nobuflisted
@@ -1227,11 +1259,16 @@ function! s:generic_review(argslist)                                   "{{{
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
         let &modeline=0
+        if s:disable_syntax
+          syn off
+        else
+          syn enable
+        endif
         silent! exe 'topleft split ' . fnameescape(l:tmp_patched_rej)
         " Try to convert rejects to unified format unless explicitly disabled
         if (! exists('g:patchreview_unified_rejects') || g:patchreview_unified_rejects == 1) &&
               \ getline(1) =~ '\m\*\{15}'
-          if executable('filterdiff')
+          if s:executable('filterdiff')
             call append(0, '--- ' . l:stripped_rel_path . '.new')
             call append(0, '*** ' . l:stripped_rel_path . '.old')
             silent %!filterdiff --format=unified
@@ -1252,7 +1289,9 @@ function! s:generic_review(argslist)                                   "{{{
         endif
         setlocal noswapfile
         if s:disable_syntax
-          setlocal syntax=none
+          syn off
+        else
+          syn enable
         endif
         setlocal bufhidden=delete
         setlocal nobuflisted

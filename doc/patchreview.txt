@@ -1,8 +1,8 @@
 *patchreview.txt* Vim global plugin for doing single, multi-patch or diff code reviews
-                    Version 1.3.0 (for Vim version 7.0 or higher)
+                    Version 1.4.0 (for Vim version 7.0 or higher)
 
                 Author: Manpreet Singh < junkblocker@yahoo.com >
-                   Copyright (C) 2006-2017 by Manpreet Singh
+                   Copyright (C) 2006-2020 by Manpreet Singh
               License : This file is placed in the public domain.
             No warranties express or implied. Use at your own risk.
 
@@ -24,6 +24,8 @@ CONTENTS                                               *PatchReview* *DiffReview
      4.3 Vertical split direction control.............: |patchreview_split_right|
      4.4 Hide/show generated .rej files...............: |patchreview_unified_rejects|
      4.5 Optional path to "wiggle" binary.............: |patchreview_wiggle|
+     4.6 Compatibility vs. speed......................: |patchreview_ignore_events|
+     4.7 Syntax highlighting vs. speed................: |patchreview_disable_syntax|
   5. Hooks............................................: |patchreview-hooks|
   6. Adding new version control plugins...............: |patchreview-plugins|
 
@@ -108,6 +110,7 @@ PatchReview Options                                     *patchreview-options*
 
 The following variables are available:
 
+|patchreview_ignore_events|
 |patchreview_disable_syntax|
 |patchreview_foldlevel|
 |patchreview_patch|
@@ -116,12 +119,26 @@ The following variables are available:
 |patchreview_unified_rejects|
 |patchreview_wiggle|
 
+                                                *g:patchreview_ignore_events*
+                                                  *patchreview_ignore_events*
+  g:patchreview_ignore_events = {0|1}
+      Optional flag to disable or not disable events during processing.
+      If the value is 0, events/autocmds are left enabled and avoid
+      issues like disabled syntax highlighting etc.
+
+      The default is 1 for a huge increase in speed.
+
+    Example: >
+           let g:patchreview_disable_autocmd = 0
+<
+
                                                 *g:patchreview_disable_syntax*
                                                   *patchreview_disable_syntax*
   g:patchreview_disable_syntax = {0|1}
       Optional flag to disable or not disable syntax highlighting in diff buffers.
       If the value is 0, syntax highlighting is left untouched.
-      Default is 1 for speed.
+
+      The default is 1 for speed.
 
     Example: >
            let g:patchreview_disable_syntax = 0
@@ -132,7 +149,8 @@ The following variables are available:
   g:patchreview_foldlevel = {number}
       Optional flag to control the foldlevel of the generated windows independent
       of any filetype or other foldlevel settings.
-      Default is 0 for Vim's usual behavior.
+
+      The default is 0 for Vim's usual behavior.
 
     Example: >
            let g:patchreview_disable_syntax = 20    " Almost disable folding
@@ -160,6 +178,8 @@ The following variables are available:
       Optional flag to deal with patch command requiring DOS line endings in
       patch files and diffs to work. Useful on Windows with UnxUtils patch.exe.
 
+      The default value is 0.
+
     Example:
         (On Windows with Cygwin) >
            let g:patchreview_patch_needs_crlf = 1
@@ -171,7 +191,7 @@ The following variables are available:
       Optional flag to keep the current source on the left and to open the diff
       splits towards the right side or the current source file.
 
-      Default value is 0.
+      The default value is 0.
 
     Example: >
            let g:patchreview_split_right = 1
