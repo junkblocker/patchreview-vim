@@ -1,14 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 2.0.0                                                     {{{
+" Version       : 2.0.1                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2020 by Manpreet Singh
+" Copyright     : 2006-2021 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
 "
+"   2.0.1 - Bugfix in handing added/deleted files
 "   2.0.0 - Allow keeping autocmds enabled during processing with the
 "           g:patchreview_ignore_events flag
 "         - Better strip level guessing
@@ -306,6 +307,8 @@ function! s:me.buflog(...)                                                   "{{
   endif
   normal! G
   setlocal nomodifiable
+  setlocal winheight=5
+
   exe l:msgtab_orgwinnr . 'wincmd w'
   if a:0 == 1 ||  a:0 > 1 && a:2 != 0
     exe 'tabnext ' . l:cur_tabnr
@@ -1153,21 +1156,17 @@ function! s:generic_review(argslist)                                   "{{{
           endif
         endif
       endif
-      "if expand('%') == '' && line('$') == 1 && getline(1) == '' && ! &modified && ! &diff
-        "silent! exe 'edit ' . l:stripped_rel_path
-      "else
-        silent! exe 'tabedit ' . fnameescape(l:stripped_rel_path)
-        if filereadable(l:tmp_patched) && l:pout =~ 'Only garbage was found in the patch input'
-          topleft new
-          exe 'r ' . fnameescape(l:tmp_patch)
-          normal! gg
-          0 delete _
-          exe 'file bad_patch_for_' . fnameescape(fnamemodify(l:inputfile, ':t'))
-          setlocal nomodifiable nomodified ft=diff bufhidden=delete
-                \ buftype=nofile noswapfile nowrap nobuflisted
-          wincmd p
-        endif
-      "endif
+      silent! exe 'tabedit ' . fnameescape(l:stripped_rel_path)
+      if filereadable(l:tmp_patched) && l:pout =~ 'Only garbage was found in the patch input'
+        topleft new
+        exe 'r ' . fnameescape(l:tmp_patch)
+        normal! gg
+        0 delete _
+        exe 'file bad_patch_for_' . fnameescape(fnamemodify(l:inputfile, ':t'))
+        setlocal nomodifiable nomodified ft=diff bufhidden=delete
+              \ buftype=nofile noswapfile nowrap nobuflisted
+        wincmd p
+      endif
       if ! error || filereadable(l:tmp_patched)
         let l:filetype = &filetype
         if exists('l:patchcmd')
@@ -1180,7 +1179,12 @@ function! s:generic_review(argslist)                                   "{{{
             syn enable
           endif
           if patch.type == '+'
-            silent! exe s:vsplit . ' diffsplit /dev/null'
+            if s:reviewmode == 'diff'
+              silent! exe s:vsplit . ' diffsplit /dev/null'
+            elseif s:reviewmode == 'patch'
+              silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
+              silent! exe 'file ' . fnameescape(l:stripped_rel_path)
+            endif
           else
             silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
           endif
@@ -1195,7 +1199,7 @@ function! s:generic_review(argslist)                                   "{{{
           setlocal modifiable
           setlocal nowrap
           " Remove buffer name
-          if ! exists('g:patchreview_persist')
+          if ! exists('g:patchreview_persist') && (patch.type != '+' || s:reviewmode != 'patch')
             setlocal buftype=nofile
             silent! 0f
           endif
@@ -1222,7 +1226,7 @@ function! s:generic_review(argslist)                                   "{{{
         endif
       endif
       if ! filereadable(l:stripped_rel_path)
-        if patch.type != '-'
+        if patch.type != '-' && patch.type != '+'
           call s:me.buflog('ERROR: Original file ' . l:stripped_rel_path . ' does not exist.')
         endif
         " modelines in loaded files mess with diff comparison
