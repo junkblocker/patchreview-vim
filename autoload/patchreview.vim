@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 2.0.1                                                     {{{
+" Version       : 2.0.2                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2021 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -9,6 +9,7 @@
 "
 " Changelog : {{{
 "
+"   2.0.2 - Bugfix in handing added/deleted files
 "   2.0.1 - Bugfix in handing added/deleted files
 "   2.0.0 - Allow keeping autocmds enabled during processing with the
 "           g:patchreview_ignore_events flag
@@ -1178,13 +1179,8 @@ function! s:generic_review(argslist)                                   "{{{
           else
             syn enable
           endif
-          if patch.type == '+'
-            if s:reviewmode == 'diff'
+          if patch.type == '+' && s:reviewmode == 'diff'
               silent! exe s:vsplit . ' diffsplit /dev/null'
-            elseif s:reviewmode == 'patch'
-              silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
-              silent! exe 'file ' . fnameescape(l:stripped_rel_path)
-            endif
           else
             silent! exe s:vsplit . ' diffsplit ' . fnameescape(l:tmp_patched)
           endif
@@ -1198,8 +1194,8 @@ function! s:generic_review(argslist)                                   "{{{
           setlocal nobuflisted
           setlocal modifiable
           setlocal nowrap
-          " Remove buffer name
-          if ! exists('g:patchreview_persist') && (patch.type != '+' || s:reviewmode != 'patch')
+          " Remove buffer name when it makes sense
+          if ! exists('g:patchreview_persist')
             setlocal buftype=nofile
             silent! 0f
           endif
@@ -1248,8 +1244,8 @@ function! s:generic_review(argslist)                                   "{{{
         setlocal nobuflisted
         setlocal modifiable
         setlocal nowrap
-        " Remove buffer name
-        if ! exists('g:patchreview_persist')
+        " Remove buffer name when it makes sense
+        if ! exists('g:patchreview_persist') && (patch.type != '+' || s:reviewmode != 'patch')
           setlocal buftype=nofile
           silent! 0f
         endif

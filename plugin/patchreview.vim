@@ -1,7 +1,7 @@
 " VIM plugin for doing single, multi-patch or diff code reviews {{{
 " Home:     https://github.com/junkblocker/patchreview-vim
 " vim.org:  http://www.vim.org/scripts/script.php?script_id=1563
-" Version       : 2.0.1 " {{{
+" Version       : 2.0.2 " {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
 " Copyright     : 2006-2020 by Manpreet Singh
 " License       : This file is placed in the public domain.
@@ -40,7 +40,7 @@
 if &cp || ((! exists('g:patchreview_debug') || g:patchreview_debug == 0) && exists('g:loaded_patchreview'))
   finish
 endif
-let g:loaded_patchreview="2.0.1"
+let g:loaded_patchreview="2.0.2"
 if v:version < 700
   echomsg 'patchreview: You need at least Vim 7.0'
   finish
