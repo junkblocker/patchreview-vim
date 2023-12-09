@@ -1,15 +1,15 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 2.0.2                                                     {{{
+" Version       : 2.1.0                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2021 by Manpreet Singh
+" Copyright     : 2006-2023 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
 "
-"   2.0.2 - Bugfix in handing added/deleted files
+"   2.1.0 - Bugfix in handing added/deleted files
 "   2.0.1 - Bugfix in handing added/deleted files
 "   2.0.0 - Allow keeping autocmds enabled during processing with the
 "           g:patchreview_ignore_events flag
@@ -732,9 +732,7 @@ function! patchreview#extract_diffs(lines, default_strip_count)            "{{{
         let g:patches['patch'] += [l:this_patch]
         unlet! l:this_patch
         call s:me.progress('Collected  ' . l:filepath)
-        if l:p_type == '!'
-          call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
-        endif
+        call s:guess_prefix_strip_value(l:filepath, a:default_strip_count)
         let l:line_num -= 1
         call s:state('START')
         continue
@@ -1092,7 +1090,11 @@ function! s:generic_review(argslist)                                   "{{{
       "  exe 'tabedit ' . l:tmp_patch
       "endif
       if patch.type == '+' && s:reviewmode =~ 'patch'
-        let l:inputfile = ''
+        if s:reviewmode == 'rpatch'
+          let l:inputfile = expand(l:stripped_rel_path, ':p')
+        else
+          let l:inputfile = ''
+        endif
         if s:is_bsd()
           " BSD patch is not GNU patch but works just fine without the
           " unavailable --binary option
@@ -1102,18 +1104,11 @@ function! s:generic_review(argslist)                                   "{{{
                 \ "shellescape(v:val)"), ' ') . ' < '
                 \ . shellescape(l:tmp_patch)
         else
-          if patch.type == '+'
-            let l:patchcmd = g:patchreview_patch . ' '
-                  \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
-                  \ + patch_R_options, "shellescape(v:val)"), ' ') . ' < '
-                  \ . shellescape(l:tmp_patch)
-          else
-            let l:patchcmd = g:patchreview_patch . ' '
-                  \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
-                  \ + patch_R_options + [l:inputfile],
-                  \ "shellescape(v:val)"), ' ') . ' < '
-                  \ . shellescape(l:tmp_patch)
-          endif
+          let l:patchcmd = g:patchreview_patch . ' '
+                \ . join(map(['--binary', '-s', '-o', l:tmp_patched]
+                \ + patch_R_options + [l:inputfile],
+                \ "shellescape(v:val)"), ' ') . ' < '
+                \ . shellescape(l:tmp_patch)
         endif
       elseif patch.type == '+' && s:reviewmode == 'diff'
         let l:inputfile = ''
