@@ -1,14 +1,16 @@
 " VIM plugin for doing single, multi-patch or diff code reviews             {{{
 " Home:  http://www.vim.org/scripts/script.php?script_id=1563
 
-" Version       : 2.1.0                                                     {{{
+" Version       : 2.1.1                                                     {{{
 " Author        : Manpreet Singh < junkblocker@yahoo.com >
-" Copyright     : 2006-2023 by Manpreet Singh
+" Copyright     : 2006-2024 by Manpreet Singh
 " License       : This file is placed in the public domain.
 "                 No warranties express or implied. Use at your own risk.
 "
 " Changelog : {{{
 "
+"   2.1.1 - Protect against project style plugins automatically changing the
+"           current directory and breaking us
 "   2.1.0 - Bugfix in handing added/deleted files
 "   2.0.1 - Bugfix in handing added/deleted files
 "   2.0.0 - Allow keeping autocmds enabled during processing with the
@@ -1020,6 +1022,7 @@ function! s:generic_review(argslist)                                   "{{{
   endwhile
   let l:strip_count = l:cand
 
+  let l:pwd = getcwd()
   let l:this_patch_num = 0
   let l:total_patches = len(g:patches['patch'])
   for patch in g:patches['patch']
@@ -1091,7 +1094,7 @@ function! s:generic_review(argslist)                                   "{{{
       "endif
       if patch.type == '+' && s:reviewmode =~ 'patch'
         if s:reviewmode == 'rpatch'
-          let l:inputfile = expand(l:stripped_rel_path, ':p')
+          let l:inputfile = expand(l:pwd . '/' . l:stripped_rel_path, ':p')
         else
           let l:inputfile = ''
         endif
@@ -1114,7 +1117,7 @@ function! s:generic_review(argslist)                                   "{{{
         let l:inputfile = ''
         unlet! l:patchcmd
       else
-        let l:inputfile = expand(l:stripped_rel_path, ':p')
+        let l:inputfile = expand(l:pwd . '/' . l:stripped_rel_path, ':p')
         if s:is_bsd()
           " BSD patch is not GNU patch but works just fine without the
           " unavailable --binary option
@@ -1152,7 +1155,7 @@ function! s:generic_review(argslist)                                   "{{{
           endif
         endif
       endif
-      silent! exe 'tabedit ' . fnameescape(l:stripped_rel_path)
+      silent! exe 'tabedit ' . fnameescape(l:pwd . '/' . l:stripped_rel_path)
       if filereadable(l:tmp_patched) && l:pout =~ 'Only garbage was found in the patch input'
         topleft new
         exe 'r ' . fnameescape(l:tmp_patch)
@@ -1216,9 +1219,9 @@ function! s:generic_review(argslist)                                   "{{{
           wincmd p
         endif
       endif
-      if ! filereadable(l:stripped_rel_path)
+      if ! filereadable(l:pwd . "/" . l:stripped_rel_path)
         if patch.type != '-' && patch.type != '+'
-          call s:me.buflog('ERROR: Original file ' . l:stripped_rel_path . ' does not exist.')
+          call s:me.buflog('ERROR: Original file "' . l:pwd . "/" . l:stripped_rel_path . '" does not exist.')
         endif
         " modelines in loaded files mess with diff comparison
         let s:keep_modeline=&modeline
